@@ -5,7 +5,26 @@ description = "KAIROS Framework — a local-first, terminal-native substrate for
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-authors = [{ name = "KAIROS owner" }]
+authors = [{ name = "Jacob Smith" }]
+keywords = [
+    "local-first",
+    "cli",
+    "knowledge-management",
+    "provenance",
+    "sqlite",
+    "full-text-search",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Text Processing :: Indexing",
+    "Typing :: Typed",
+]
 dependencies = [
     "typer>=0.12,<1.0",
     "rich>=13.7,<14.0",

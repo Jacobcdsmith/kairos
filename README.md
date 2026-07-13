@@ -1,23 +1,55 @@
+<div align="center">
+
 # KAIROS
 
-KAIROS is a local-first, terminal-native workspace for a single persistent
-agent runtime. It helps one owner traverse a personal technical corpus,
-preserve the lineage of ideas and decisions, and maintain inspectable
-working context across sessions.
+**A local-first, terminal-native workspace for tracing the lineage of your own ideas.**
 
-It is not a chatbot and not a generic RAG wrapper. It is a source-grounded
-local workspace: ingest documents, repositories, structured configuration,
-logs, and notes; trace concepts and implementation artifacts through those
-sources; form curated working sets called **coherence wells**; and inspect
-the exact evidence behind every retrieval or relation.
+[![CI](https://github.com/Jacobcdsmith/kairos/actions/workflows/ci.yml/badge.svg)](https://github.com/Jacobcdsmith/kairos/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
+[![Typed: strict](https://img.shields.io/badge/pyright-strict-brightgreen)](pyproject.toml)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
+[![No network. No telemetry.](https://img.shields.io/badge/network-none-critical)](docs/architecture.md)
 
-This is the v0.1 milestone: the framework substrate. It is fully usable
+[Quick start](#quick-start) ·
+[Why KAIROS](#why-kairos) ·
+[CLI reference](docs/cli.md) ·
+[Architecture](docs/architecture.md) ·
+[Status](docs/v0.1-status.md) ·
+[Contributing](CONTRIBUTING.md)
+
+</div>
+
+---
+
+KAIROS helps one owner traverse a personal technical corpus, preserve the
+lineage of ideas and decisions, and keep an inspectable working context
+across sessions — without shipping a single byte off the machine it runs on.
+
+It is **not** a chatbot and **not** a generic RAG wrapper. It is a
+source-grounded local workspace: ingest documents, repositories, structured
+configuration, logs, and notes; trace concepts and implementation artifacts
+through those sources via exact, explicit relations (no embeddings, no
+similarity guessing); form curated working sets called **coherence wells**;
+and inspect the exact evidence — down to the line, page, JSON path, or
+Kconfig symbol — behind every result KAIROS gives you.
+
+This is the **v0.1 milestone**: the framework substrate. It is fully usable
 without any LLM, requires no network access, and stores everything locally
-in SQLite. See [docs/v0.1-status.md](docs/v0.1-status.md) for what's in and
-out of scope, and [docs/architecture.md](docs/architecture.md) for how it's
-built.
+in SQLite.
 
-## Installation
+## Why KAIROS
+
+| | |
+|---|---|
+| **Local-first, always** | No cloud dependency, no telemetry, no optional-but-really-mandatory network call. Every read and write stays on your machine. |
+| **Corpus-native parsing** | Markdown, PDF, JSON, Kconfig-menu JSON, runtime/emulator logs, and Python repositories are each parsed by structure — headings, pages, JSON paths, symbols, sessions, AST nodes — not blindly chunked by byte count. |
+| **Provenance over vibes** | Every search hit, trace node, and shown span carries its artifact id, workspace-relative path, exact locator, parser version, and provenance layer (raw / extracted / derived / user). Nothing is allowed to masquerade as source truth. |
+| **Read-only toward your sources** | KAIROS ingests bytes into a content-addressed, write-once store and never reopens the original file for writing. The only writes it ever makes to *your* data are additive: notes and well membership. |
+| **Cross-document traversal without embeddings** | `kairos trace` walks explicit, typed relations (`heading_contains`, `imports`, `depends_on`, `log_in_session`, ...) built from cross-artifact entity reconciliation — so a bare word in one file's paragraph can reach a sibling document through a shared heading, two hops later, deterministically. |
+| **A real exit code** | Every one of the eleven commands fails loudly and non-zero with an actionable message — never a silent no-op, never a bare traceback. |
+
+## Quick start
 
 Requires Python 3.12+.
 
@@ -30,8 +62,6 @@ source .venv/bin/activate
 
 pip install -e ".[dev]"
 ```
-
-## Quick start
 
 ```bash
 # Create a workspace
@@ -68,19 +98,63 @@ kairos logs "connection" --level ERROR --before 2 --after 2
 kairos doctor
 ```
 
-Run `scripts/demo.sh` for a scripted walkthrough of every command against
-synthetic fixtures.
+Run [`scripts/demo.sh`](scripts/demo.sh) for a scripted walkthrough of every
+command against the synthetic fixtures in `tests/fixtures/`.
 
-## Every command's full reference
+## The full command surface
 
-See [docs/cli.md](docs/cli.md) for the complete command list, options, and
-example output.
+`init` · `ingest` · `artifacts` · `show` · `search` · `trace` · `note add` /
+`note list` · `well create` / `well add` / `well remove` / `well show` /
+`well list` · `config` · `logs` · `doctor`
 
-## Development
+See [docs/cli.md](docs/cli.md) for the complete reference with options and
+example output for every command.
 
-```bash
-ruff format src tests
-ruff check src tests
-pyright
-pytest
-```
+## How it's built
+
+- **Storage**: SQLite as the canonical store, nine tables used verbatim
+  against the spec (`artifacts`, `source_spans`, `entities`, `mentions`,
+  `relations`, `notes`, `coherence_wells`, `well_members`, `events`), plus an
+  FTS5 virtual table with sync triggers for full-text search — no separate
+  search service, no vector database.
+- **Migrations**: a single hand-written Alembic migration, run
+  programmatically by `kairos init`.
+- **Layering**: `domain/` (pure Python, zero framework imports) →
+  `infrastructure/` (SQLAlchemy, parsers, filesystem, git) → `services/`
+  (application logic) → `cli/` (Typer + Rich presentation). See
+  [CONTRIBUTING.md](CONTRIBUTING.md#architecture-rules) for the enforced
+  boundaries.
+- **Quality gate**: Python 3.12+ strict typing end to end, Pydantic v2 at
+  every process boundary, Ruff for format+lint, Pyright in strict mode, and
+  a pytest suite covering every parser's well-formed *and* malformed path
+  plus full CLI integration coverage.
+
+Full detail in [docs/architecture.md](docs/architecture.md), including the
+provenance model, the parser registry, and the explicit non-goals for this
+milestone.
+
+## What v0.1 doesn't do (on purpose)
+
+Hardware/embedded systems, device clients, simulations or virtual
+companions, remote node management, external messaging integrations, cloud
+services, multi-agent orchestration, autonomous background execution,
+self-modification, and model inference or model-provider integration are
+all explicitly out of scope for this milestone — not omissions, a boundary
+the project is designed around. See
+[docs/architecture.md#non-goals-v01](docs/architecture.md#non-goals-v01) and
+[docs/v0.1-status.md](docs/v0.1-status.md) for the full picture of what's in,
+what's out, and what a later milestone might still add within this same
+local-framework scope.
+
+## Contributing
+
+Bug reports, feature ideas, and pull requests are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, architecture
+rules, and the scope boundary above (read that part first, it'll save you
+some work). Please also review the [Code of Conduct](CODE_OF_CONDUCT.md).
+Found a security issue? See [SECURITY.md](SECURITY.md) rather than filing a
+public issue.
+
+## License
+
+[MIT](LICENSE) © Jacob Smith

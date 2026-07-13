@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose something new for KAIROS to do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: KAIROS v0.1 deliberately excludes hardware/embedded
+        systems, device clients, simulations, remote node management, external
+        messaging integrations, cloud services, multi-agent orchestration,
+        autonomous background execution, self-modification, and model
+        inference/model-provider integration. Proposals in those directions
+        will be declined regardless of how they're scoped — see
+        [docs/architecture.md](../../docs/architecture.md#non-goals-v01).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do with your corpus that KAIROS doesn't support today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What would the CLI command, output, or schema change look like?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Anything you already tried with existing commands (`search`, `trace`, `well`, ...)?

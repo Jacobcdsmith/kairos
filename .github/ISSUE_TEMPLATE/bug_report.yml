@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in KAIROS doesn't behave the way the docs say it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact CLI commands, ideally against a minimal/synthetic input file.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Paste the exact command output, including the `Error:` line if there is one.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: KAIROS version / commit
+      description: Output of `pip show kairos` or the commit hash you're on.
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version and OS
+      placeholder: "Python 3.12.4 on Windows 11 / Ubuntu 22.04 / macOS 14"
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: kairos doctor output
+      description: Run `kairos doctor` inside the affected workspace and paste the result.
+      render: shell
