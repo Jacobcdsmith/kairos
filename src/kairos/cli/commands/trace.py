@@ -31,15 +31,19 @@ def run(
 
     node_table = Table(title=escape(f'Trace nodes: "{term_or_id}"'))
     node_table.add_column("kind")
-    node_table.add_column("id")
-    node_table.add_column("label")
-    node_table.add_column("locator")
+    node_table.add_column("id", overflow="fold")
+    node_table.add_column("label", overflow="fold")
+    node_table.add_column("artifact_id", overflow="fold")
+    node_table.add_column("source_path", overflow="fold")
+    node_table.add_column("locator", overflow="fold")
     node_table.add_column("layer")
     for node in result.nodes:
         node_table.add_row(
             node.node_kind,
             node.node_id,
             escape(node.label),
+            node.provenance.artifact_id if node.provenance else "",
+            escape(node.provenance.source_path) if node.provenance else "",
             escape(node.provenance.locator_str) if node.provenance else "",
             node.provenance.layer if node.provenance else "",
         )

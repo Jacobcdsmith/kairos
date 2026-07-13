@@ -16,6 +16,8 @@ def test_trace_by_entity_name_reaches_sibling_spans(runner: CliRunner, workspace
     assert result.exit_code == 0
     assert "heading_contains" in result.output
     assert "extracted" in result.output
+    # a span node must expose which artifact it came from, not just its own id
+    assert "sample.md" in result.output
 
 
 def test_trace_crosses_artifacts_via_shared_heading(runner: CliRunner, workspace: Path) -> None:
@@ -33,6 +35,10 @@ def test_trace_crosses_artifacts_via_shared_heading(runner: CliRunner, workspace
     # span from sample.md (a different artifact) must both appear
     assert "widget system" in result.output.lower()
     assert "gadgets" in result.output.lower()
+    # the two span nodes must be identifiable as coming from two distinct
+    # artifacts, not just two distinct span ids
+    assert "sample.md" in result.output
+    assert "sample2.md" in result.output
 
 
 def test_trace_unknown_term_reports_no_matches(runner: CliRunner, workspace: Path) -> None:

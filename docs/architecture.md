@@ -122,8 +122,8 @@ class Parser(Protocol):
 and a `parse_status` (`ok` / `partial` / `failed`). **A parser never
 raises to signal malformed input** — it downgrades `parse_status` and
 records a `Diagnostic`, returning whatever it could recover. Ingest persists
-diagnostics onto the artifact's `metadata_json` and as an `ingest.artifact`
-event; nothing is silently dropped.
+diagnostics onto the artifact's `metadata_json`; nothing is silently
+dropped.
 
 Each parser emits at least one *derived relation* kind, so `trace` has
 edges to walk, not just a flat list of spans:
