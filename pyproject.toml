@@ -40,6 +40,7 @@ dev = [
     "pytest-cov>=5.0,<6.0",
     "ruff>=0.5,<1.0",
     "pyright>=1.1,<2.0",
+    "build>=1.2,<2.0",
 ]
 
 [project.scripts]
@@ -51,6 +52,15 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+# Alembic's script.py.mako is a template consulted only by `alembic
+# revision` (a development-time command KAIROS itself never invokes --
+# `kairos init` only calls `alembic.command.upgrade`, which reads env.py
+# and versions/ directly). Not required for any KAIROS command to run, but
+# included for packaging completeness: setuptools only auto-includes .py
+# files inside discovered packages, so a non-.py file needs an explicit entry.
+kairos = ["infrastructure/database/migrations/script.py.mako"]
 
 [tool.ruff]
 line-length = 100
