@@ -30,4 +30,8 @@ def run() -> None:
     console.print(table)
 
     if not report.healthy:
-        raise typer.Exit(code=1)
+        # A failing doctor check is a workspace/integrity-category failure
+        # (broken schema, tampered content, drifted search index) — never a
+        # user-input mistake — so it gets code 2, not the generic 1. See
+        # docs/cli.md's exit-code table.
+        raise typer.Exit(code=2)
