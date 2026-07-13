@@ -60,8 +60,11 @@ parser.
 
 ## Architecture rules
 
-The layering in `src/kairos/` is enforced by convention, not tooling, so
-please respect it:
+The layering in `src/kairos/` is enforced by
+`tests/unit/test_architecture_boundaries.py`, which fails CI if the domain
+package ever imports Typer, Rich, SQLAlchemy, Alembic, pypdf, or any
+infrastructure/cli/services/schemas module. Please still respect the
+intent, not just the letter of what that one check covers:
 
 - **`domain/`** — pure Python. Zero imports from Typer, Rich, SQLAlchemy, or
   any parser library. This is where `Artifact`, `SourceSpan`, `Locator`,

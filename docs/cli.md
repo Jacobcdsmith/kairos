@@ -104,14 +104,19 @@ scopes to a coherence well's member artifacts.
 
 ```
 $ kairos search widget
-                               Search: "widget"
-┌─────────────────┬────────────────┬────────────┬───────────┬────────────────┐
-│ artifact_id     │ path           │ locator    │ layer     │ snippet        │
-├─────────────────┼────────────────┼────────────┼───────────┼────────────────┤
-│ 22437b14...     │ sample.md      │ lines:3-3  │ extracted │ The [widget]   │
-│                 │                │            │           │ system handles │
-└─────────────────┴────────────────┴────────────┴───────────┴────────────────┘
+                                          Search: "widget"
+┌────────────┬─────────────────┬───────────────┬───────────┬────────────────────────┬───────────┬────────────────┐
+│ path       │ artifact_id     │ artifact_kind │ locator   │ parser                 │ layer     │ snippet        │
+├────────────┼─────────────────┼───────────────┼───────────┼────────────────────────┼───────────┼────────────────┤
+│ sample.md  │ 22437b14...     │ markdown      │ lines:3-3 │ kairos.markdown v1.0.0 │ extracted │ The [widget]   │
+│            │                 │               │           │                        │           │ system handles │
+└────────────┴─────────────────┴───────────────┴───────────┴────────────────────────┴───────────┴────────────────┘
 ```
+
+Every hit carries the full provenance envelope — `path`, `artifact_id`,
+`artifact_kind`, `locator`, `parser` (name + version), and `layer` — via the
+shared citation component every source-derived command uses
+(`kairos.cli.citation`), never just a subset.
 
 FTS5 query syntax applies: `()`, `-`, `"`, bare `AND`/`OR`/`NEAR` are
 operators. A malformed query (e.g. unbalanced parens) exits non-zero with
@@ -129,13 +134,13 @@ id, an exact span id, an entity name match, or FTS5 hits. Walks
 
 ```
 $ kairos trace Widgets --depth 2
-                                            Trace nodes: "Widgets"
-┌────────┬──────────────────────┬─────────────────────┬──────────────────────┬─────────────┬───────────┬───────────┐
-│ kind   │ id                   │ label               │ artifact_id           │ source_path │ locator   │ layer     │
-├────────┼──────────────────────┼─────────────────────┼──────────────────────┼─────────────┼───────────┼───────────┤
-│ entity │ bbdddf4863ef4237...  │ Widgets             │                       │             │           │           │
-│ span   │ 6d29e4451de5442d...  │ The widget system...│ 22437b14d8df46dc...  │ sample.md   │ lines:3-3 │ extracted │
-└────────┴──────────────────────┴─────────────────────┴──────────────────────┴─────────────┴───────────┴───────────┘
+                                             Trace nodes: "Widgets"
+┌────────┬───────────────┬──────────────┬─────────────┬──────────────┬───────────────┬───────────┬────────────────────────┬───────────┐
+│ kind   │ id            │ label        │ source_path │ artifact_id  │ artifact_kind │ locator   │ parser                 │ layer     │
+├────────┼───────────────┼──────────────┼─────────────┼──────────────┼───────────────┼───────────┼────────────────────────┼───────────┤
+│ entity │ bbdddf486...  │ Widgets      │             │              │               │           │                        │           │
+│ span   │ 6d29e4451...  │ The widget…  │ sample.md   │ 22437b14...  │ markdown      │ lines:3-3 │ kairos.markdown v1.0.0 │ extracted │
+└────────┴───────────────┴──────────────┴─────────────┴──────────────┴───────────────┴───────────┴────────────────────────┴───────────┘
                                   Trace edges
 ┌────────────────┬───────────────┬────────────────┬───────────┬───────────────┐
 │ subject        │ predicate     │ object         │ layer     │ rule          │
@@ -143,6 +148,14 @@ $ kairos trace Widgets --depth 2
 │ entity:bbdd... │ heading_cont… │ span:6d29e4... │ derived   │ markdown.hea… │
 └────────────────┴───────────────┴────────────────┴───────────┴───────────────┘
 ```
+
+Entity nodes have no single owning artifact (an entity can be mentioned
+across many documents), so their provenance columns are blank — that's
+expected, not a missing-data bug. Every span node carries the full envelope.
+An edge's `layer` reflects the actual `origin` column of the relation it
+came from (`derived` for every `relations`-table edge in v0.1, `extracted`
+for `mentioned_in` edges from the `mentions` table) — see
+[docs/relation-registry.md](relation-registry.md).
 
 A term with no entity of its own — a bare word inside a paragraph — can
 still cross into a *different* artifact within a couple of hops, by
@@ -217,10 +230,19 @@ $ kairos config CONFIG_WIFI_POWER_SAVE
 │ depends_on: CONFIG_WIFI                                                    │
 │ choices: (none)                                                           │
 │ children: (none)                                                         │
-│ locator: kconfig:Main/Networking/CONFIG_WIFI_POWER_SAVE  layer=extracted  │
+│ artifact_id: 1d4210ac6ec34f80a9f3...                                      │
+│ artifact_kind: kconfig                                                    │
 │ source: sample_menu.json                                                  │
+│ locator: kconfig:Main/Networking/CONFIG_WIFI_POWER_SAVE                  │
+│ parser: kairos.kconfig v1.0.0                                             │
+│ layer: extracted                                                          │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+Any field in the source JSON this parser doesn't explicitly model (e.g. a
+project-specific `help` string) is still preserved — see it via
+`kairos show <artifact-id> --locator kconfig:<path>` rather than `config`,
+which only surfaces the six fields above plus provenance.
 
 ---
 
@@ -235,6 +257,10 @@ $ kairos logs connection --level ERROR
 $ kairos logs widget --before 1 --after 1
 ```
 
+Like `search`, every row carries the full provenance envelope (`artifact_id`,
+`artifact_kind`, `locator`, `parser`, `layer`) alongside `line`/`timestamp`/
+`level`/`component`/`message`.
+
 ---
 
 ## `kairos doctor`
@@ -242,18 +268,25 @@ $ kairos logs widget --before 1 --after 1
 Environment and workspace health checks: FTS5 actually compiled into this
 Python's `sqlite3` (the one failure that would otherwise break every
 ingest/search silently), workspace root present, schema migration applied,
-content store and event log reachable. Exits non-zero if any check fails.
+content store and event log reachable, every stored blob's hash still
+matches its artifact record (`content_integrity`), and the search index
+still agrees with `source_spans` row-for-row (`fts_consistency`). Exits
+with code `2` (see [Exit codes](#exit-codes)) if any check fails.
 
 ```
 $ kairos doctor
-                                 kairos doctor
-┌──────────────────┬────────┬─────────────────────────────────────────────────┐
-│ check            │ status │ detail                                          │
-├──────────────────┼────────┼─────────────────────────────────────────────────┤
-│ fts5_available   │ ok     │ FTS5 is compiled into this Python's sqlite3.    │
-│ workspace_root   │ ok     │ /path/to/workspace                              │
-│ schema_migration │ ok     │ alembic_version='0001'                          │
-│ content_store    │ ok     │ /path/to/workspace/.kairos/content              │
-│ events_log       │ ok     │ /path/to/workspace/.kairos/events.jsonl         │
-└──────────────────┴────────┴─────────────────────────────────────────────────┘
+                                     kairos doctor
+┌────────────────────┬────────┬─────────────────────────────────────────────────┐
+│ check              │ status │ detail                                          │
+├────────────────────┼────────┼─────────────────────────────────────────────────┤
+│ fts5_available     │ ok     │ FTS5 is compiled into this Python's sqlite3.    │
+│ workspace_root     │ ok     │ /path/to/workspace                              │
+│ schema_migration   │ ok     │ alembic_version='0001'                          │
+│ content_store      │ ok     │ /path/to/workspace/.kairos/content              │
+│ events_log         │ ok     │ /path/to/workspace/.kairos/events.jsonl         │
+│ content_integrity  │ ok     │ 8 stored blob(s) verified against their        │
+│                    │        │ recorded sha256.                               │
+│ fts_consistency    │ ok     │ source_spans=37, source_spans_fts=37,          │
+│                    │        │ orphaned_fts_rows=0                            │
+└────────────────────┴────────┴─────────────────────────────────────────────────┘
 ```

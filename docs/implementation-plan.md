@@ -4,6 +4,16 @@ This document is written before any code exists. It fixes the assumptions,
 repository layout, schema, migration strategy, parser design, test plan, and
 commit sequence that the rest of the milestone follows.
 
+> **Historical note (post-implementation-audit):** this is a point-in-time
+> planning document, not the live contract — see
+> [docs/architecture.md](architecture.md), [docs/cli.md](cli.md), and
+> [docs/v0.1-status.md](v0.1-status.md) for what actually shipped. One
+> concrete drift: §5 below describes diagnostics being recorded "into an
+> `events` row (`event_type="ingest.diagnostic"`)" — this was never
+> implemented; diagnostics are recorded in the artifact's `metadata_json`
+> only (still fully non-silent, just not as a separate event type). See
+> [docs/v0.1-audit.md](v0.1-audit.md) for the full reconciliation.
+
 ## 1. Assumptions
 
 - Target platform for development/testing: Windows 11 with Python 3.12+,
