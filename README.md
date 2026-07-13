@@ -101,6 +101,15 @@ kairos doctor
 Run [`scripts/demo.sh`](scripts/demo.sh) for a scripted walkthrough of every
 command against the synthetic fixtures in `tests/fixtures/`.
 
+## Release verification
+
+Every claim on this page — offline operation, source immutability, complete
+provenance, explicit relation discipline, FTS integrity — is backed by a
+test that was actually run, plus a build that installs independently of
+this repository checkout. See
+[docs/v0.1-status.md#audit-verification](docs/v0.1-status.md#audit-verification)
+for the exact commands and their actual, current results.
+
 ## The full command surface
 
 `init` · `ingest` · `artifacts` · `show` · `search` · `trace` · `note add` /
