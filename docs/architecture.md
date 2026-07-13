@@ -96,6 +96,20 @@ Additions, not deviations:
 Migrations run via `alembic.command.upgrade`, invoked programmatically by
 `kairos init` — never as a subprocess. v0.1 ships exactly one migration.
 
+### FTS5 tokenization and ranking
+
+`source_spans_fts` uses FTS5's default `unicode61` tokenizer: Unicode-aware
+word splitting and case folding, no stemming (`"widget"` and `"widgets"` are
+different tokens; `"Widget"` and `"widget"` are the same one). Ranking is
+FTS5's built-in `bm25()` over the single indexed column
+(`text_content`) — with one column there is no cross-column weighting to
+configure. `kairos doctor`'s `fts_consistency` check (added in the v0.1
+audit — see [docs/v0.1-audit.md](v0.1-audit.md)) confirms `source_spans` and
+`source_spans_fts` agree in row count and that every FTS row's `span_id`
+resolves to a live span; `kairos search` independently skips any FTS hit
+whose backing span or artifact row is missing rather than surfacing a
+dangling reference.
+
 ## Parser registry
 
 `kairos.infrastructure.parsers.registry.ParserRegistry` picks a parser by
