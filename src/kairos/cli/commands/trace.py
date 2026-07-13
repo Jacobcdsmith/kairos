@@ -9,9 +9,21 @@ import typer
 from rich.markup import escape
 from rich.table import Table
 
+from kairos.cli.citation import add_provenance_columns, provenance_cells
 from kairos.cli.errors import cli_command, console
+from kairos.schemas.provenance import ProvenanceEnvelope
 from kairos.services.context import RuntimeContext
 from kairos.services.trace import trace as trace_service
+
+_BLANK_PROVENANCE_CELLS = ("", "", "", "", "")
+
+
+def _node_provenance_cells(provenance: ProvenanceEnvelope | None) -> tuple[str, ...]:
+    # Entity nodes legitimately have no single owning artifact (an entity can
+    # be mentioned across many documents) — blank cells, not a missing-data bug.
+    if provenance is None:
+        return _BLANK_PROVENANCE_CELLS
+    return provenance_cells(provenance)
 
 
 @cli_command
@@ -33,19 +45,16 @@ def run(
     node_table.add_column("kind")
     node_table.add_column("id", overflow="fold")
     node_table.add_column("label", overflow="fold")
-    node_table.add_column("artifact_id", overflow="fold")
     node_table.add_column("source_path", overflow="fold")
-    node_table.add_column("locator", overflow="fold")
-    node_table.add_column("layer")
+    add_provenance_columns(node_table)
     for node in result.nodes:
+        source_path = escape(node.provenance.source_path) if node.provenance else ""
         node_table.add_row(
             node.node_kind,
             node.node_id,
             escape(node.label),
-            node.provenance.artifact_id if node.provenance else "",
-            escape(node.provenance.source_path) if node.provenance else "",
-            escape(node.provenance.locator_str) if node.provenance else "",
-            node.provenance.layer if node.provenance else "",
+            source_path,
+            *_node_provenance_cells(node.provenance),
         )
     console.print(node_table)
 

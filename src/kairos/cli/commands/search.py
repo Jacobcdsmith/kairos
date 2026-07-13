@@ -9,6 +9,7 @@ import typer
 from rich.markup import escape
 from rich.table import Table
 
+from kairos.cli.citation import add_provenance_columns, provenance_cells
 from kairos.cli.errors import cli_command, console
 from kairos.services.context import RuntimeContext
 from kairos.services.search import search as search_service
@@ -29,18 +30,14 @@ def run(
         return
 
     table = Table(title=escape(f'Search: "{query}"'))
-    table.add_column("artifact_id")
     table.add_column("path")
-    table.add_column("locator")
-    table.add_column("layer")
+    add_provenance_columns(table)
     table.add_column("snippet")
 
     for hit in result.hits:
         table.add_row(
-            hit.provenance.artifact_id,
             escape(hit.provenance.source_path),
-            escape(hit.provenance.locator_str),
-            hit.provenance.layer,
+            *provenance_cells(hit.provenance),
             escape(hit.snippet),
         )
 

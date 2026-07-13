@@ -14,9 +14,12 @@ from kairos.domain.errors import KairosError
 # IDs in this tool are full UUID4 hex strings, and every result must expose
 # them (per the provenance requirement) — Rich's default 80-column fallback
 # for non-TTY output (piped, redirected, or under test) would silently
-# ellide them mid-table. A wide fixed floor avoids that; a real terminal
-# wider than this still gets full use of its own width.
-_MIN_WIDTH = 160
+# ellide or word-wrap them mid-table. There's no real "screen width" to
+# respect for piped/redirected/captured output in the first place (a real
+# terminal still gets its own actual width via the ``is_terminal`` check
+# below), so non-TTY output uses a generous fixed width instead of guessing
+# how many columns any given command will ever render.
+_MIN_WIDTH = 2000
 
 
 def _make_console(*, stderr: bool = False) -> Console:

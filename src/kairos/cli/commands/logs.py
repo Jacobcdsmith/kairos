@@ -9,6 +9,7 @@ import typer
 from rich.markup import escape
 from rich.table import Table
 
+from kairos.cli.citation import add_provenance_columns, provenance_cells
 from kairos.cli.errors import cli_command, console
 from kairos.services.context import RuntimeContext
 from kairos.services.logs_query import query_logs
@@ -35,6 +36,7 @@ def run(
     table = Table(title=escape(f'Logs: "{query}"'))
     table.add_column("path")
     table.add_column("line")
+    add_provenance_columns(table)
     table.add_column("timestamp")
     table.add_column("level")
     table.add_column("component")
@@ -44,6 +46,7 @@ def run(
         table.add_row(
             escape(hit.provenance.source_path),
             str(hit.line_number),
+            *provenance_cells(hit.provenance),
             hit.timestamp or "",
             hit.level or "",
             escape(hit.component or ""),

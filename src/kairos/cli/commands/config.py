@@ -9,6 +9,7 @@ import typer
 from rich.markup import escape
 from rich.panel import Panel
 
+from kairos.cli.citation import provenance_lines
 from kairos.cli.errors import cli_command, console
 from kairos.services.config_query import get_config_symbol
 from kairos.services.context import RuntimeContext
@@ -28,7 +29,6 @@ def run(
         f"depends_on: {result.depends_on or '(none)'}\n"
         f"choices: {', '.join(result.choices) or '(none)'}\n"
         f"children: {', '.join(result.children) or '(none)'}\n"
-        f"locator: {result.provenance.locator_str}  layer={result.provenance.layer}\n"
-        f"source: {result.provenance.source_path}"
+        f"{provenance_lines(result.provenance)}"
     )
     console.print(Panel(escape(body), title=escape(result.symbol)))
