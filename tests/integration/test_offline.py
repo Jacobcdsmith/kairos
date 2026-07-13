@@ -26,7 +26,7 @@ def _blocked(*_args: object, **_kwargs: object) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _block_network(monkeypatch: pytest.MonkeyPatch) -> None:
+def block_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket, "socket", _blocked)
     monkeypatch.setattr(socket, "create_connection", _blocked)
     monkeypatch.setattr(socket, "getaddrinfo", _blocked)
@@ -35,9 +35,7 @@ def _block_network(monkeypatch: pytest.MonkeyPatch) -> None:
 def _first_artifact_id(workspace: Path) -> str:
     conn = sqlite3.connect(workspace / ".kairos" / "kairos.db")
     try:
-        row = conn.execute(
-            "SELECT id FROM artifacts WHERE kind = 'markdown' LIMIT 1"
-        ).fetchone()
+        row = conn.execute("SELECT id FROM artifacts WHERE kind = 'markdown' LIMIT 1").fetchone()
         return cast(str, row[0])
     finally:
         conn.close()
