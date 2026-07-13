@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 # Scripted walkthrough of every KAIROS v0.1 command, against the synthetic
-# fixtures in tests/fixtures/. Safe to re-run: it creates a fresh temp
-# workspace each time.
+# fixtures in tests/fixtures/ (no real corpus data, nothing sensitive).
+# Safe to re-run: it creates a fresh temp workspace each time and removes it
+# on exit, whether the script succeeds or fails.
+#
+# Requires Bash. Tested via Git Bash on Windows (this environment) and via
+# GitHub Actions' ubuntu-latest runner in CI (see .github/workflows/ci.yml).
+# On Windows without Git Bash/WSL, there is no separate native script --
+# run the equivalent commands by hand from README.md's Quick Start section
+# in PowerShell instead.
+#
+# Makes no network request: every command it runs is proven offline by
+# tests/integration/test_offline.py (a socket-level block across this exact
+# command surface). Exits non-zero (via `set -euo pipefail`) on the first
+# command that fails.
 set -euo pipefail
 
 KAIROS_BIN="${KAIROS_BIN:-kairos}"
@@ -17,7 +29,13 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FIXTURES="$REPO_ROOT/tests/fixtures"
-WORKSPACE="$(mktemp -d)/demo-workspace"
+WORKSPACE_ROOT="$(mktemp -d)"
+WORKSPACE="$WORKSPACE_ROOT/demo-workspace"
+
+cleanup() {
+    rm -rf "$WORKSPACE_ROOT"
+}
+trap cleanup EXIT
 
 step() {
     echo
@@ -88,4 +106,4 @@ step "doctor"
 "$KAIROS_BIN" doctor
 
 step "done"
-echo "Workspace left at: $WORKSPACE"
+echo "SUCCESS: all KAIROS demo commands exited 0. Temporary workspace removed."
