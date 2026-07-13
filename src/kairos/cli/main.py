@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 import typer
 
+from kairos import __version__
 from kairos.cli.commands import (
     artifacts,
     config,
@@ -17,6 +20,7 @@ from kairos.cli.commands import (
     trace,
     well,
 )
+from kairos.cli.errors import console
 
 app = typer.Typer(
     name="kairos",
@@ -24,6 +28,28 @@ app = typer.Typer(
     no_args_is_help=True,
     pretty_exceptions_show_locals=False,
 )
+
+
+def _version_callback(show_version: bool) -> None:
+    if show_version:
+        console.print(f"kairos {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main_callback(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the installed KAIROS version and exit.",
+        ),
+    ] = False,
+) -> None:
+    return
+
 
 app.command("init")(init.run)
 app.command("ingest")(ingest.run)
