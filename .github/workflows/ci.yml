@@ -30,3 +30,6 @@ jobs:
 
       - name: Pytest
         run: pytest -q
+
+      - name: Demo (end-to-end smoke test)
+        run: KAIROS_BIN="$(python -c 'import shutil; print(shutil.which("kairos"))')" bash scripts/demo.sh
