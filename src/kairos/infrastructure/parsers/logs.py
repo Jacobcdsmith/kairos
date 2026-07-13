@@ -25,7 +25,7 @@ from kairos.domain.enums import (
 )
 from kairos.domain.ids import new_id
 from kairos.domain.locators import LogEventLocator, locator_to_json
-from kairos.domain.models import Diagnostic, Entity, Relation, SourceSpan
+from kairos.domain.models import Diagnostic, Entity, Mention, Relation, SourceSpan
 from kairos.domain.parser import ParseResult
 
 _LOG_LINE_RE = re.compile(
@@ -61,6 +61,35 @@ class LogParser:
                         canonical_name=boundary.group("label"),
                         entity_type=EntityType.LOG_SESSION.value,
                         origin=Origin.EXTRACTED,
+                    )
+                )
+                # The boundary line itself is grounding evidence for the
+                # session entity — every other entity-creating parser in
+                # this codebase mentions its entity to the exact span it
+                # came from, and a log_session entity is no exception.
+                boundary_span_id = new_id()
+                result.spans.append(
+                    SourceSpan(
+                        id=boundary_span_id,
+                        artifact_id=artifact_id,
+                        span_kind=SpanKind.LOG_LINE,
+                        locator_json=locator_to_json(
+                            LogEventLocator(line_number=line_number, timestamp=None)
+                        ),
+                        parent_span_id=None,
+                        ordinal=i,
+                        text_content=line,
+                        metadata={"is_session_boundary": True},
+                    )
+                )
+                result.mentions.append(
+                    Mention(
+                        id=new_id(),
+                        entity_id=session_entity_id,
+                        source_span_id=boundary_span_id,
+                        surface_form=boundary.group("label"),
+                        extraction_rule="log.session_boundary.v1",
+                        confidence=1.0,
                     )
                 )
                 current_session_entity_id = session_entity_id

@@ -31,7 +31,7 @@ from kairos.domain.enums import (
 )
 from kairos.domain.ids import new_id
 from kairos.domain.locators import RepoFileLinesLocator, locator_to_json
-from kairos.domain.models import Diagnostic, Entity, Relation, SourceSpan
+from kairos.domain.models import Diagnostic, Entity, Mention, Relation, SourceSpan
 from kairos.domain.parser import ParseResult
 
 
@@ -104,6 +104,16 @@ class PythonParser:
                 origin=Origin.EXTRACTED,
             )
         )
+        result.mentions.append(
+            Mention(
+                id=new_id(),
+                entity_id=module_entity_id,
+                source_span_id=module_span_id,
+                surface_form=module_name,
+                extraction_rule="python.module.v1",
+                confidence=1.0,
+            )
+        )
 
         ordinal = [1]
 
@@ -123,12 +133,23 @@ class PythonParser:
                         )
                     )
                     ordinal[0] += 1
+                    class_entity_id = new_id()
                     result.entities.append(
                         Entity(
-                            id=new_id(),
+                            id=class_entity_id,
                             canonical_name=node.name,
                             entity_type=EntityType.CLASS_DEF.value,
                             origin=Origin.EXTRACTED,
+                        )
+                    )
+                    result.mentions.append(
+                        Mention(
+                            id=new_id(),
+                            entity_id=class_entity_id,
+                            source_span_id=span_id,
+                            surface_form=node.name,
+                            extraction_rule="python.class.v1",
+                            confidence=1.0,
                         )
                     )
                     visit_body(node.body, span_id)
@@ -147,12 +168,23 @@ class PythonParser:
                         )
                     )
                     ordinal[0] += 1
+                    function_entity_id = new_id()
                     result.entities.append(
                         Entity(
-                            id=new_id(),
+                            id=function_entity_id,
                             canonical_name=node.name,
                             entity_type=EntityType.FUNCTION_DEF.value,
                             origin=Origin.EXTRACTED,
+                        )
+                    )
+                    result.mentions.append(
+                        Mention(
+                            id=new_id(),
+                            entity_id=function_entity_id,
+                            source_span_id=span_id,
+                            surface_form=node.name,
+                            extraction_rule="python.function.v1",
+                            confidence=1.0,
                         )
                     )
 

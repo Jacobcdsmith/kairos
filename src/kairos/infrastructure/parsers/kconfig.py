@@ -39,6 +39,22 @@ from kairos.domain.parser import ParseResult
 
 _SIMPLE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+# Keys this parser understands and surfaces onto specific metadata fields.
+# Anything else present on a node is preserved verbatim under
+# ``metadata["extra"]`` instead of being silently discarded — a
+# project-specific extension field (e.g. "help", "range") is still visible
+# via `kairos show`/`kairos config`, even though nothing here interprets it.
+_KNOWN_NODE_KEYS = {
+    "node_type",
+    "name",
+    "prompt",
+    "type",
+    "default",
+    "depends_on",
+    "choices",
+    "children",
+}
+
 
 def is_kconfig_menu_document(document: JsonValue) -> bool:
     return isinstance(document, dict) and document.get("kairos_kind") == "kconfig_menu"
@@ -76,6 +92,7 @@ class KconfigParser:
             span_id = new_id()
             locator = KconfigSymbolLocator(menu_path=node_path)
 
+            extra = {k: v for k, v in node.items() if k not in _KNOWN_NODE_KEYS}
             metadata: dict[str, object] = {
                 "node_type": node_type,
                 "prompt": node.get("prompt"),
@@ -83,6 +100,7 @@ class KconfigParser:
                 "default": node.get("default"),
                 "depends_on": node.get("depends_on"),
                 "choices": node.get("choices", []),
+                "extra": extra,
             }
             text_content = str(node.get("prompt") or name)
 
@@ -147,6 +165,19 @@ class KconfigParser:
                 for child in children:
                     if isinstance(child, dict):
                         visit(child, node_path, span_id)
+                    else:
+                        # A non-object entry in a children array — never
+                        # silently skipped, per the project's founding
+                        # "nothing is silently discarded" rule.
+                        result.diagnostics.append(
+                            Diagnostic(
+                                message=(
+                                    f"Non-object child under {node_path!r} was not a "
+                                    f"menu/symbol node and was skipped: {child!r}"
+                                ),
+                                locator_json=locator_to_json(locator),
+                            )
+                        )
 
         visit(document, "", None)
 
@@ -183,5 +214,5 @@ class KconfigParser:
                     )
                 )
 
-        result.parse_status = ParseStatus.OK
+        result.parse_status = ParseStatus.PARTIAL if result.diagnostics else ParseStatus.OK
         return result

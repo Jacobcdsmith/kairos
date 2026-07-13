@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import cast
 
 from kairos.domain.enums import EntityType, ParseStatus, SpanKind
 from kairos.domain.locators import KconfigSymbolLocator, locator_from_json
@@ -63,3 +65,54 @@ def test_symbol_span_has_kconfig_locator() -> None:
     locator = locator_from_json(symbol_span.locator_json)
     assert isinstance(locator, KconfigSymbolLocator)
     assert locator.menu_path.startswith("Main/Networking/")
+
+
+def test_unknown_fields_preserved_in_extra_metadata(tmp_path: Path) -> None:
+    """A field this parser doesn't know about (e.g. a project-specific
+    ``help`` string) must still be visible via ``kairos show``/``kairos
+    config`` — not silently dropped just because it isn't one of the six
+    fields this parser explicitly interprets.
+    """
+    doc: dict[str, object] = {
+        "kairos_kind": "kconfig_menu",
+        "name": "Main",
+        "children": [
+            {
+                "node_type": "symbol",
+                "name": "CONFIG_FOO",
+                "prompt": "Foo",
+                "type": "bool",
+                "help": "A longer explanation not modeled by any known field.",
+                "range": [0, 100],
+                "children": [],
+            }
+        ],
+    }
+    path = tmp_path / "extra.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+
+    result = KconfigParser().parse(path, "artifact-extra")
+    symbol_span = next(s for s in result.spans if s.span_kind == SpanKind.KCONFIG_SYMBOL)
+    extra = cast("dict[str, object]", symbol_span.metadata["extra"])
+    assert extra["help"] == "A longer explanation not modeled by any known field."
+    assert extra["range"] == [0, 100]
+    assert result.parse_status == ParseStatus.OK
+
+
+def test_non_dict_child_is_diagnosed_not_dropped(tmp_path: Path) -> None:
+    doc: dict[str, object] = {
+        "kairos_kind": "kconfig_menu",
+        "name": "Main",
+        "children": [
+            {"node_type": "symbol", "name": "CONFIG_A", "children": []},
+            "not-a-node",
+        ],
+    }
+    path = tmp_path / "malformed_child.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+
+    result = KconfigParser().parse(path, "artifact-malformed")
+    assert result.parse_status == ParseStatus.PARTIAL
+    assert any("not-a-node" in d.message for d in result.diagnostics)
+    # the well-formed sibling is still parsed, not dropped along with its bad sibling
+    assert any(e.canonical_name == "CONFIG_A" for e in result.entities)
