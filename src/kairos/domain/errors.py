@@ -1,4 +1,10 @@
-"""Domain-level exceptions. CLI commands catch these and map them to non-zero exit codes."""
+"""Domain-level exceptions. CLI commands catch these and map them to non-zero exit codes.
+
+Exit code taxonomy (see docs/cli.md):
+    1 - expected user/input/domain failure (the default for KairosError)
+    2 - workspace/configuration/integrity failure (overridden below)
+    3 - unexpected internal error (not a KairosError at all; see cli/errors.py)
+"""
 
 from __future__ import annotations
 
@@ -6,13 +12,19 @@ from __future__ import annotations
 class KairosError(Exception):
     """Base class for all expected, actionable KAIROS errors."""
 
+    exit_code: int = 1
+
 
 class WorkspaceNotFoundError(KairosError):
     """Raised when a command is run outside a directory containing ``.kairos/``."""
 
+    exit_code = 2
+
 
 class WorkspaceAlreadyExistsError(KairosError):
     """Raised by ``kairos init`` when a ``.kairos/`` directory already exists."""
+
+    exit_code = 2
 
 
 class ArtifactNotFoundError(KairosError):
@@ -57,3 +69,5 @@ class ConfigSymbolNotFoundError(KairosError):
 
 class ReadOnlySourceViolationError(KairosError):
     """Raised if any code path attempts to mutate registered source material."""
+
+    exit_code = 2

@@ -84,4 +84,4 @@ def test_search_malformed_fts_query_fails_cleanly(runner: CliRunner, workspace: 
 
 def test_commands_require_a_workspace(runner: CliRunner, tmp_path: Path) -> None:
     result = run_in(runner, tmp_path, ["artifacts"])
-    assert result.exit_code == 1
+    assert result.exit_code == 2  # workspace/configuration failure, not a user-input error

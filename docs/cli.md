@@ -5,6 +5,19 @@ stderr prefixed `Error:`. Table/panel output uses [Rich](https://github.com/Text
 IDs are always shown in full (never truncated), since every result must
 expose its exact provenance.
 
+## Exit codes
+
+| Code | Meaning | Examples |
+|---|---|---|
+| `0` | Success | |
+| `1` | Expected user/input/domain failure | Unknown artifact/well/note-target id, a bad locator string, an unrecognized file kind, a malformed FTS5 query, a duplicate well name, an unknown Kconfig symbol |
+| `2` | Workspace/configuration/integrity failure | No `.kairos/` found, `init` on a directory that already has one, any failing `kairos doctor` check (broken schema, tampered content, a drifted search index) |
+| `3` | Unexpected internal error (a real bug, not user input) | Prints a short message and suppresses the traceback by default |
+
+Set `KAIROS_DEBUG=1` in the environment to get the full Python traceback for
+a code-3 failure instead of the short message — useful when filing a bug
+report, not needed for normal use.
+
 ---
 
 ## `kairos init <workspace>`

@@ -19,4 +19,4 @@ def test_doctor_reports_healthy_on_a_fresh_workspace(runner: CliRunner, workspac
 
 def test_doctor_requires_a_workspace(runner: CliRunner, tmp_path: Path) -> None:
     result = run_in(runner, tmp_path, ["doctor"])
-    assert result.exit_code == 1
+    assert result.exit_code == 2  # workspace/configuration failure, not a user-input error
