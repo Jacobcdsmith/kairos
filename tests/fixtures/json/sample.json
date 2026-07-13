@@ -1,0 +1,8 @@
+{
+  "name": "kairos-demo",
+  "version": 1,
+  "widgets": [
+    { "id": "w1", "kind": "widget" },
+    { "id": "w2", "kind": "gadget" }
+  ]
+}

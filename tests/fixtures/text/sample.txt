@@ -1,0 +1,3 @@
+This is a plain paragraph with no markdown structure.
+
+It has two paragraphs separated by a blank line.

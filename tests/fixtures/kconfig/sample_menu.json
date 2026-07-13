@@ -1,0 +1,29 @@
+{
+  "kairos_kind": "kconfig_menu",
+  "name": "Main",
+  "children": [
+    {
+      "node_type": "menu",
+      "name": "Networking",
+      "children": [
+        {
+          "node_type": "symbol",
+          "name": "CONFIG_WIFI",
+          "prompt": "Enable WiFi",
+          "type": "bool",
+          "default": "y",
+          "children": []
+        },
+        {
+          "node_type": "symbol",
+          "name": "CONFIG_WIFI_POWER_SAVE",
+          "prompt": "WiFi power save",
+          "type": "bool",
+          "default": "n",
+          "depends_on": "CONFIG_WIFI",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

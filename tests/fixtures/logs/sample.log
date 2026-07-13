@@ -1,0 +1,5 @@
+=== BOOT ===
+2024-01-01T00:00:00Z INFO [boot] starting kernel
+2024-01-01T00:00:01Z INFO [wifi] widget system online
+not a well formed log line at all
+2024-01-01T00:00:02Z ERROR [wifi] connection dropped
