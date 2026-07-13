@@ -1,0 +1,55 @@
+[project]
+name = "kairos"
+version = "0.1.0"
+description = "KAIROS Framework — a local-first, terminal-native substrate for a single persistent agent runtime."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "KAIROS owner" }]
+dependencies = [
+    "typer>=0.12,<1.0",
+    "rich>=13.7,<14.0",
+    "pydantic>=2.7,<3.0",
+    "sqlalchemy>=2.0,<3.0",
+    "alembic>=1.13,<2.0",
+    "pypdf>=4.2,<5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "pytest-cov>=5.0,<6.0",
+    "ruff>=0.5,<1.0",
+    "pyright>=1.1,<2.0",
+]
+
+[project.scripts]
+kairos = "kairos.cli.main:app"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["tests/fixtures"]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+reportMissingImports = true
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]

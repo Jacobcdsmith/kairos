@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.pyright/
+
+# workspace state created by `kairos init` when run inside this repo for manual testing
+.kairos/
+demo-workspace/
