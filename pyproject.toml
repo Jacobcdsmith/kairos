@@ -41,6 +41,12 @@ dev = [
     "ruff>=0.5,<1.0",
     "pyright>=1.1,<2.0",
     "build>=1.2,<2.0",
+    # Needed as importable packages (not just build-system requirements) so
+    # `python -m build --no-isolation` doesn't need to fetch them into a
+    # fresh isolated build env over the network — see scripts/verify_install.sh
+    # and .github/workflows/ci.yml's Build step.
+    "setuptools>=68",
+    "wheel",
 ]
 
 [project.scripts]
