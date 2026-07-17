@@ -119,6 +119,23 @@ for the exact commands and their actual, current results.
 See [docs/cli.md](docs/cli.md) for the complete reference with options and
 example output for every command.
 
+## Terminal Lineage Interface (alpha)
+
+`kairos tui` is an optional, full-screen, keyboard-first workspace over the
+same v0.1 services above — three panes (Explorer, Workspace, Evidence), a
+persistent `:command` line, and one visible active coherence well. It adds
+no LLM, no network, no embeddings, and no new mutation beyond what the CLI
+already exposes (`note add`, well activation). It's a presentation layer,
+not a new substrate.
+
+```
+pip install -e ".[tui]"
+kairos tui
+```
+
+See [docs/tli.md](docs/tli.md) for the full command grammar, keybindings,
+provenance legend, and alpha limitations.
+
 ## How it's built
 
 - **Storage**: SQLite as the canonical store, nine tables used verbatim

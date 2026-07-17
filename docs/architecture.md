@@ -208,6 +208,45 @@ KAIROS is read-only with respect to registered source material:
   `git rev-parse` / `git remote -v`, never via a mutating command, and
   failures are non-fatal (ingest proceeds without it).
 
+## The TUI presentation layer (v0.2-alpha)
+
+`kairos tui` (`src/kairos/tui/`) is a fourth presentation surface alongside
+the CLI, not a new layer in the `domain -> infrastructure -> services ->
+cli` chain:
+
+```
+Textual widgets/screens (kairos/tui/{app,screens,widgets}.py)
+      -> kairos.tui.controller.dispatch_text
+      -> exactly one kairos.services.* function per command
+      -> existing domain/infrastructure layers, unchanged
+```
+
+Rules this boundary enforces:
+
+- **Textual is optional and isolated.** Only `kairos/tui/` and
+  `kairos/cli/commands/tui.py` (lazily, inside `run()`) may import
+  `textual`. `tests/unit/test_architecture_boundaries.py::test_only_kairos_tui_imports_textual`
+  enforces this the same way the domain-layer import test does.
+- **No direct SQL/FTS/ORM access from the TUI.** `kairos.tui.controller`
+  calls only typed `kairos.services.*` functions, each already returning
+  a `ProvenanceEnvelope`-carrying result (`SearchResult`, `TraceResult`,
+  `ArtifactDetail`, ...). The one gap found during implementation —
+  reading recent local activity — was filled with a minimally-typed
+  service (`kairos.services.activity.recent_events`), not a query written
+  inside the TUI.
+- **State is explicit and immutable.** `kairos.tui.state.TuiState` is a
+  frozen dataclass; `dispatch_text` returns a new one rather than mutating
+  widget-internal state. This makes `kairos.tui.controller` unit-testable
+  without a Textual `Pilot` at all (`tests/tui/test_controller.py`).
+- **Mutation surface is a strict subset of the CLI's.** The controller can
+  only call `add_note` and read/activate/clear a well — never
+  `create_well`, `add_member`, or anything ingest-related. See
+  [docs/tli.md](tli.md) for the exact command grammar and
+  [docs/tli-implementation-plan.md](tli-implementation-plan.md) for the
+  full design rationale, including where it deliberately deviates from an
+  initial spec (well lookup by name instead of id; a dedicated `"notes"`
+  mode instead of overloading `"show"`).
+
 ## Non-goals (v0.1)
 
 Out of scope for this milestone, by design: hardware/embedded systems,

@@ -48,6 +48,18 @@ dev = [
     "setuptools>=68",
     "wheel",
 ]
+# Optional: `kairos tui` (the Terminal Lineage Interface, v0.2-alpha). The
+# base install and every other command work with this extra absent — see
+# src/kairos/cli/commands/tui.py's find_spec guard and docs/tli.md.
+tui = [
+    "textual>=0.58,<1.0",
+]
+# Test-only: driving KairosApp through Textual's headless Pilot needs an
+# async test runner. Only required to run tests/tui/test_app.py; the rest
+# of the suite (and the base install) is unaffected by its absence.
+tui-test = [
+    "pytest-asyncio>=0.24,<1.0",
+]
 
 [project.scripts]
 kairos = "kairos.cli.main:app"
@@ -76,6 +88,11 @@ extend-exclude = ["tests/fixtures"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+# Imports of kairos.tui.* must follow the importorskip guards (Textual/
+# pytest-asyncio may be absent) — see the module docstring in test_app.py.
+"tests/tui/test_app.py" = ["E402"]
+
 [tool.pyright]
 include = ["src", "tests"]
 exclude = ["tests/fixtures"]
@@ -88,3 +105,4 @@ venv = ".venv"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
+asyncio_mode = "auto"

@@ -18,6 +18,7 @@ from kairos.cli.commands import (
     search,
     show,
     trace,
+    tui,
     well,
 )
 from kairos.cli.errors import console
@@ -60,6 +61,7 @@ app.command("trace")(trace.run)
 app.command("config")(config.run)
 app.command("logs")(logs.run)
 app.command("doctor")(doctor.run)
+app.command("tui")(tui.run)
 app.add_typer(note.app, name="note")
 app.add_typer(well.app, name="well")
 

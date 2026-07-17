@@ -290,3 +290,22 @@ $ kairos doctor
 │                    │        │ orphaned_fts_rows=0                            │
 └────────────────────┴────────┴─────────────────────────────────────────────────┘
 ```
+
+---
+
+## `kairos tui`
+
+Launches the Terminal Lineage Interface (v0.2-alpha) — a full-screen,
+keyboard-first presentation layer over the commands above. Optional:
+requires `pip install -e ".[tui]"`; without it, prints an install message
+and exits `1` rather than raising an import error. See
+[docs/tli.md](tli.md) for the full command grammar and keybindings inside
+the interface itself (a separate, fixed `:command` grammar — not related
+to this page's shell-level command surface).
+
+```
+$ kairos tui
+The Terminal Lineage Interface requires the optional 'tui' extra.
+  Install it with:  pip install -e ".[tui]"
+  Then run:         kairos tui
+```

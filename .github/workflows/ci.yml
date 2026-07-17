@@ -31,6 +31,12 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+      - name: Install TUI extras
+        run: pip install -e ".[tui,tui-test]"
+
+      - name: Pytest (TUI)
+        run: pytest -q tests/tui
+
       - name: Build sdist + wheel
         run: python -m build --no-isolation
 
