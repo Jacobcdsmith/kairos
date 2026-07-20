@@ -1,8 +1,3 @@
-"""The bottom keybinding/status strip — always visible, never decorative-only:
-it shows the current status message (including errors, in plain text, no
-traceback) alongside the fixed keybinding legend.
-"""
-
 from __future__ import annotations
 
 from rich.markup import escape
@@ -10,8 +5,12 @@ from textual.widgets import Static
 
 from kairos.tui.state import TuiState
 
+_ARROW = "\u203a"
+_SEP = "\u2502"
 _LEGEND = (
-    "↑↓ select · Enter inspect · Tab pane · / search · w wells · Ctrl+R history · ? help · q quit"
+    f" {_ARROW} select  {_SEP} Enter inspect  {_SEP} Tab pane  "
+    f"{_SEP} / search  {_SEP} w wells  {_SEP} ^P find"
+    f"  {_SEP} t tutorial  {_SEP} ? help  {_SEP} q quit"
 )
 
 
@@ -22,8 +21,11 @@ class StatusLine(Static):
     def refresh_from_state(self, state: TuiState) -> None:
         if state.status_message:
             message = escape(state.status_message)
-            prefix = "[red]Error:[/red] " if state.status == "error" else "[dim]"
-            suffix = "" if state.status == "error" else "[/dim]"
-            self.update(f"{prefix}{message}{suffix}   —   {_LEGEND}")
+            if state.status == "error":
+                prefix = "[red]\u2717[/red] "
+                self.update(f"{prefix}{message}   {_SEP}{_LEGEND}")
+            else:
+                prefix = "[dim]\u2713[/dim] "
+                self.update(f"{prefix}[dim]{message}[/dim]   {_SEP}{_LEGEND}")
         else:
             self.update(_LEGEND)

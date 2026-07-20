@@ -10,6 +10,7 @@ from kairos import __version__
 from kairos.cli.commands import (
     artifacts,
     config,
+    demo,
     doctor,
     ingest,
     init,
@@ -61,6 +62,7 @@ app.command("trace")(trace.run)
 app.command("config")(config.run)
 app.command("logs")(logs.run)
 app.command("doctor")(doctor.run)
+app.command("demo")(demo.run)
 app.command("tui")(tui.run)
 app.add_typer(note.app, name="note")
 app.add_typer(well.app, name="well")
