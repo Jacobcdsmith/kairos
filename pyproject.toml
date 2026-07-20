@@ -1,6 +1,6 @@
 [project]
 name = "kairos"
-version = "0.1.0"
+version = "0.1.1"
 description = "KAIROS Framework — a local-first, terminal-native substrate for a single persistent agent runtime."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -59,6 +59,13 @@ tui = [
 # of the suite (and the base install) is unaffected by its absence.
 tui-test = [
     "pytest-asyncio>=0.24,<1.0",
+]
+# Everything: base + CLI extras + TUI + dev tools. One command to get the
+# full KAIROS experience.
+all = [
+    "kairos[dev]",
+    "kairos[tui]",
+    "kairos[tui-test]",
 ]
 
 [project.scripts]

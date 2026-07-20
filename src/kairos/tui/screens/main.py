@@ -16,17 +16,34 @@ from kairos.tui.widgets.evidence_pane import EvidencePane
 from kairos.tui.widgets.explorer_pane import ExplorerPane
 from kairos.tui.widgets.header_line import HeaderLine
 from kairos.tui.widgets.status_line import StatusLine
+from kairos.tui.widgets.tab_bar import TabBar
 from kairos.tui.widgets.workspace_pane import WorkspacePane
+
+_MODE_LABELS = {
+    "home": "\u25cb Home",
+    "artifacts": "\u25a1 Artifacts",
+    "search": "\u25cf Search",
+    "show": "\u25a1 Detail",
+    "trace": "\u25c6 Trace",
+    "well": "\u25c8 Wells",
+    "config": "\u2699 Config",
+    "logs": "\u2261 Logs",
+    "doctor": "\u2699 Doctor",
+    "history": "\u25b8 History",
+    "help": "? Help",
+    "notes": "\u270e Notes",
+}
 
 
 class MainScreen(Screen[None]):
     def compose(self) -> ComposeResult:
         yield HeaderLine()
+        yield TabBar()
         with Horizontal(id="panes"):
             yield ExplorerPane(id="explorer-pane")
             yield WorkspacePane()
             with Vertical(id="evidence-container"):
-                yield Static("Evidence", id="evidence-title", classes="pane-title")
+                yield Static("\u25cf Evidence", id="evidence-title", classes="pane-title")
                 yield EvidencePane(id="evidence-pane")
         yield CommandLine()
         yield StatusLine()
@@ -36,6 +53,7 @@ class MainScreen(Screen[None]):
 
     def refresh_from_state(self, old: TuiState | None, new: TuiState) -> None:
         self.query_one(HeaderLine).refresh_from_state(new)
+        self.query_one(TabBar).refresh_from_state(new)
         self.query_one(ExplorerPane).refresh_from_state(new)
         self.query_one(EvidencePane).refresh_from_state(new)
         self.query_one(StatusLine).refresh_from_state(new)

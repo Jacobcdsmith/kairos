@@ -1,17 +1,16 @@
-"""The persistent command line: an ``Input`` that submits ``:command`` text
-to the app's dispatcher and clears itself. This is the whole "conversation"
-surface — it never becomes a chat box; it only ever accepts grammar
-``commands.py`` can parse.
-"""
-
 from __future__ import annotations
 
 from textual.widgets import Input
 
+_PROMPT = "\u2b22"
+
 
 class CommandLine(Input):
     def __init__(self) -> None:
-        super().__init__(placeholder=":search <term>   ?  for help", id="command-line")
+        super().__init__(
+            placeholder=f"{_PROMPT}  :search <term>   ? for help   ^P to find",
+            id="command-line",
+        )
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         event.stop()

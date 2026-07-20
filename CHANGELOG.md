@@ -2,6 +2,46 @@
 
 All notable changes to KAIROS are documented in this file.
 
+## [0.1.1] — 2026-07-20
+
+Additive enhancements: agent tool adapter, demo command, streamlined install,
+public-facing README overhaul with ASCII art, and TUI polish.
+
+### Added
+
+- **Agent tool adapter** (`src/kairos/tool.py`): importable Python module that
+  wraps every KAIROS service with structured dict returns and inline source
+  links (`file://#L,C` + `vscode://file/`). Functions:
+  `kairos_status`, `kairos_ingest`, `kairos_search`, `kairos_trace`,
+  `kairos_show`, `kairos_source_content`, `kairos_source_link`,
+  `kairos_well_create/list/add/show`. Every result carries
+  `artifact_id`, `source_path`, exact `locator`, and `source_link`.
+- **`kairos demo` command**: self-contained cross-platform walkthrough
+  (no bash required). Creates a temp workspace, runs all 8 command groups
+  against test fixtures, cleans up.
+- **`[all]` install extra**: single `pip install -e ".[all]"` gets you
+  CLI + TUI + dev tooling.
+- **`:tutorial` TUI command**: typed `:tutorial` now recognized alongside
+  the existing `t` keybinding. `src/kairos/tui/commands.py` and
+  `src/kairos/tui/controller.py` updated.
+- **`kairos-agent-tool` Hermes skill**: persistent skill teaching the agent
+  the auto-ingest → well → search → trace → source-link workflow.
+
+### Changed
+
+- **README restructured**: ASCII KAIROS logo banner, one-shot quick-start,
+  collapsible details blocks, command reference table, demo section
+  promoted, anti-goals collapsed to bottom.
+- **TUI status line legend** now includes `t tutorial` (was present already).
+
+### Fixed
+
+- **Source link resolution** in `kairos/tool.py`: Pydantic V2 model wrapping
+  no longer prevents `file://#L,C` detection — duck-typed attribute access
+  now handles both domain dataclasses and Pydantic model wrappers.
+- **Workspace name display** in `kairos_status`: reads from `.kairos/config.json`
+  instead of a non-existent `Workspace.name` attribute.
+
 ## [0.1.0]
 
 First release. KAIROS v0.1.0 is a local-first, terminal-native workspace for
