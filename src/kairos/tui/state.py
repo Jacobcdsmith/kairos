@@ -12,6 +12,7 @@ from typing import Literal, cast
 from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
+from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorReport
 from kairos.schemas.logs import LogHit
 from kairos.schemas.note import NoteResult
@@ -57,7 +58,8 @@ FocusTarget = Literal["explorer", "workspace", "evidence", "command_line"]
 # Exactly one of these is populated in `TuiState.last_result` at a time,
 # matching `TuiState.mode`.
 ModeResult = (
-    SearchResult
+    DashboardResult
+    | SearchResult
     | TraceResult
     | ArtifactDetail
     | list[ArtifactSummary]

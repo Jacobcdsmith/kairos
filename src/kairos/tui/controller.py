@@ -11,6 +11,15 @@ from datetime import UTC, datetime
 
 from kairos.domain.errors import KairosError
 from kairos.domain.ids import new_id
+from kairos.infrastructure.database.engine import session_scope
+from kairos.infrastructure.database.orm import (
+    ArtifactRow,
+    CoherenceWellRow,
+    EntityRow,
+    RelationRow,
+    SourceSpanRow,
+)
+from kairos.schemas.dashboard import DashboardResult, ParseBreakdown
 from kairos.services.activity import recent_events
 from kairos.services.artifacts import list_artifacts as list_artifacts_service
 from kairos.services.config_query import get_config_symbol
@@ -115,13 +124,48 @@ def _record(
 
 def _home(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
     events = recent_events(runtime_ctx)
+    with session_scope(runtime_ctx.session_factory) as session:
+        from sqlalchemy import func, select
+
+        total_artifacts = session.scalar(select(func.count(ArtifactRow.id))) or 0
+        total_entities = session.scalar(select(func.count(EntityRow.id))) or 0
+        total_relations = session.scalar(select(func.count(RelationRow.id))) or 0
+        total_spans = session.scalar(select(func.count(SourceSpanRow.id))) or 0
+        total_wells = session.scalar(select(func.count(CoherenceWellRow.id))) or 0
+
+        # Breakdown by kind
+        kind_rows = session.execute(
+            select(
+                ArtifactRow.kind,
+                func.count(ArtifactRow.id),
+                func.count().filter(ArtifactRow.parse_status == "ok"),
+                func.count().filter(ArtifactRow.parse_status != "ok"),
+            ).group_by(ArtifactRow.kind)
+        ).all()
+        breakdown = [
+            ParseBreakdown(kind=k, count=c, status_ok=ok, status_error=err)
+            for k, c, ok, err in kind_rows
+        ]
+        parse_errors = sum(b.status_error for b in breakdown)
+
+    dashboard = DashboardResult(
+        total_artifacts=total_artifacts,
+        total_entities=total_entities,
+        total_relations=total_relations,
+        total_spans=total_spans,
+        total_wells=total_wells,
+        artifacts_by_kind=breakdown,
+        parse_errors=parse_errors,
+        workspace_name=runtime_ctx.workspace.root.name,
+        recent_activity=events[:5],
+    )
     return _record(
         state,
         mode="home",
         command=command.raw,
         status="success",
-        summary=f"{len(events)} recent event(s)",
-        last_result=events,
+        summary=f"{total_artifacts} artifacts, {total_entities} entities, {total_relations} relations",
+        last_result=dashboard,
     )
 
 

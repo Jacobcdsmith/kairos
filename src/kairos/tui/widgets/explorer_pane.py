@@ -8,6 +8,7 @@ from textual.widgets import ListItem, ListView, Static
 from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary, SpanResult
 from kairos.schemas.config import ConfigSymbolResult
+from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorCheck, DoctorReport
 from kairos.schemas.logs import LogHit
 from kairos.schemas.note import NoteResult
@@ -95,8 +96,10 @@ def _rows_for(state: TuiState) -> list[_Row]:
         return [_well_member_row(m) for m in result.members]
     if (notes := as_list_of(result, NoteResult)) is not None:
         return [_note_row(n) for n in notes]
+    if isinstance(result, DashboardResult):
+        return _dashboard_rows(result)
     if result is None and state.mode == "home":
-        return [_Row("\u25cb  No local activity yet.", "", None, None)]
+        return [_Row("○  No local activity yet.", "", None, None)]
     return []
 
 
@@ -187,5 +190,28 @@ def _well_member_row(m: WellMemberResult) -> _Row:
 
 
 def _note_row(n: NoteResult) -> _Row:
-    sub = f"on {n.target_id} \u00b7 {n.created_at.isoformat(timespec='seconds')}"
-    return _Row(f"\u270e  {n.body[:56]}", sub, "note", n.id)
+    sub = f"on {n.target_id} · {n.created_at.isoformat(timespec='seconds')}"
+    return _Row(f"✎  {n.body[:56]}", sub, "note", n.id)
+
+
+def _dashboard_rows(d: DashboardResult) -> list[_Row]:
+    rows: list[_Row] = []
+    rows.append(_Row("▣  Artifacts", str(d.total_artifacts), "artifact", "dashboard:artifacts"))
+    rows.append(_Row("◈  Entities", str(d.total_entities), "entity", "dashboard:entities"))
+    rows.append(_Row("◉  Relations", str(d.total_relations), "relation", "dashboard:relations"))
+    rows.append(_Row("▤  Spans", str(d.total_spans), "span", "dashboard:spans"))
+    rows.append(_Row("◈  Wells", str(d.total_wells), "well", "dashboard:wells"))
+    if d.parse_errors:
+        rows.append(_Row("⚠  Parse errors", str(d.parse_errors), "artifact", "dashboard:errors"))
+    # Breakdown by kind
+    for bk in d.artifacts_by_kind:
+        sub = f"{bk.count} total · {bk.status_ok} ok, {bk.status_error} errors"
+        rows.append(_Row(f"  ▸  {bk.kind}", sub, "artifact", f"dashboard:kind:{bk.kind}"))
+    # Recent activity
+    for ev in d.recent_activity:
+        rows.append(_Row(
+            f"  ▸  {ev.event_type}",
+            ev.occurred_at.isoformat(timespec="minutes"),
+            None, None,
+        ))
+    return rows or [_Row("○  Empty workspace — try :ingest .", "", None, None)]

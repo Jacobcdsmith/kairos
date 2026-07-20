@@ -9,6 +9,7 @@ from kairos.cli.citation import add_provenance_columns, provenance_cells
 from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
+from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorReport
 from kairos.schemas.logs import LogHit
 from kairos.schemas.note import NoteResult
@@ -43,6 +44,9 @@ class WorkspacePane(RichLog):
 
 def _render_result(state: TuiState) -> object:
     result = state.last_result
+
+    if isinstance(result, DashboardResult):
+        return _render_dashboard(result)
 
     if (events := as_list_of(result, ActivityEvent)) is not None:
         table = Table(title="\u25cb Recent local activity", show_lines=False, padding=(0, 2))
@@ -172,4 +176,62 @@ def _render_result(state: TuiState) -> object:
             table.add_row(note.id[:8], created_at, escape(note.body))
         return table
 
-    return Text("(\u25cb no results)", style="dim italic")
+    return Text("(○ no results)", style="dim italic")
+
+
+def _render_dashboard(d: DashboardResult) -> object:
+    from rich.table import Table
+
+    lines: list[object] = []
+
+    # Metrics row
+    metrics = Table(show_header=False, show_lines=False, padding=(0, 3), box=None)
+    metrics.add_column("label", style="bold cyan")
+    metrics.add_column("value", style="bold white", justify="right")
+    for label, value, color in [
+        ("Artifacts", str(d.total_artifacts), "bold white"),
+        ("Entities", str(d.total_entities), "bold white"),
+        ("Relations", str(d.total_relations), "bold white"),
+        ("Spans", str(d.total_spans), "bold white"),
+        ("Wells", str(d.total_wells), "bold white"),
+    ]:
+        metrics.add_row(label, f"[{color}]{value}[/{color}]")
+
+    lines.append(metrics)
+    lines.append("")
+
+    # Breakdown by kind
+    if d.artifacts_by_kind:
+        breakdown = Table(
+            title="Artifact breakdown", show_lines=False, padding=(0, 2), box=None
+        )
+        breakdown.add_column("kind", style="cyan")
+        breakdown.add_column("count", justify="right")
+        breakdown.add_column("ok", justify="right")
+        breakdown.add_column("errors", justify="right")
+        for bk in d.artifacts_by_kind:
+            err_style = "red" if bk.status_error else "green"
+            breakdown.add_row(
+                bk.kind,
+                str(bk.count),
+                "[green]" + str(bk.status_ok) + "[/green]",
+                f"[{err_style}]{bk.status_error}[/{err_style}]",
+            )
+        lines.append(breakdown)
+
+    if d.parse_errors:
+        lines.append(f"[red]⚠  {d.parse_errors} parse error(s) across all artifacts[/red]")
+
+    # Recent activity
+    if d.recent_activity:
+        events = Table(
+            title="Recent activity", show_lines=False, padding=(0, 2), box=None
+        )
+        events.add_column("time", style="dim")
+        events.add_column("event", style="cyan")
+        for ev in d.recent_activity:
+            events.add_row(ev.occurred_at.isoformat(timespec="minutes"), ev.event_type)
+        lines.append("")
+        lines.append(events)
+
+    return lines

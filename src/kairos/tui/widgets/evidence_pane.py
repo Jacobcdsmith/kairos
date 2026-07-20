@@ -11,8 +11,10 @@ from rich.markup import escape
 from textual.widgets import Static
 
 from kairos.cli.citation import provenance_lines
+from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
+from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorReport
 from kairos.schemas.logs import LogHit
 from kairos.schemas.note import NoteResult

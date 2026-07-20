@@ -36,9 +36,9 @@
 ---
 
 <div align="center">
-<img src="docs/assets/tli-search-evidence.svg" alt="KAIROS Terminal Lineage Interface: a search hit selected in the Explorer pane, its full citation rendered in the Evidence pane." width="100%">
+<img src="docs/assets/tli-dashboard.svg" alt="KAIROS TUI home dashboard: workspace metrics (139 artifacts, 624 entities, 848 relations, 1575 spans), artifact kind breakdown, and recent activity in the Explorer pane." width="100%">
 
-<sub>`kairos tui` — an actual screenshot, not a mockup. Every field on screen is a real column from a real SQLite row.</sub>
+<sub>`kairos tui` — the home dashboard showing live workspace stats. No mockups, no embeddings. Every number comes from a real SQLite query.</sub>
 </div>
 
 ---
