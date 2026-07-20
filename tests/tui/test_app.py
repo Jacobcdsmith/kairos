@@ -64,7 +64,7 @@ async def test_header_shows_workspace_well_and_offline_state(
         header_text = str(app.query_one(HeaderLine).renderable)
         assert runtime_ctx.workspace.root.name in header_text
         assert "well: none" in header_text
-        assert "LOCAL / OFFLINE" in header_text
+        assert "LOCAL" in header_text
 
         await _type_command(pilot, ":well use ")  # missing name: usage error, well stays none
         assert "well: none" in str(app.query_one(HeaderLine).renderable)
@@ -95,7 +95,7 @@ async def test_selecting_artifact_renders_full_citation(runtime_ctx: RuntimeCont
         await pilot.pause()
 
         evidence = str(app.query_one(EvidencePane).renderable)
-        assert "artifact_id:" in evidence
+        assert "id:" in evidence
         assert "path:" in evidence
         assert "kind:" in evidence
         assert "parser:" in evidence

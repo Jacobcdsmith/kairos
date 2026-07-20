@@ -1,12 +1,20 @@
 <div align="center">
 
-# KAIROS
-
-**Your corpus. Your machine. Receipts for every claim.**
-
-A local-first, terminal-native workspace that traces the lineage of a
-personal technical corpus — no cloud, no telemetry, no LLM required, and
-no result it can't point to an exact byte of evidence for.
+```
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║     ██╗  ██╗ █████╗ ██╗██████╗  ██████╗ ███████╗            ║
+║     ██║ ██╔╝██╔══██╗██║██╔══██╗██╔═══██╗██╔════╝            ║
+║     █████╔╝ ███████║██║██████╔╝██║   ██║███████╗            ║
+║     ██╔═██╗ ██╔══██║██║██╔══██╗██║   ██║╚════██║            ║
+║     ██║  ██╗██║  ██║██║██║  ██║╚██████╔╝███████║            ║
+║     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝            ║
+║                                                              ║
+║     Your corpus. Your machine. Receipts for every claim.     ║
+║     Local-first · terminal-native · zero embeddings          ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+```
 
 [![CI](https://github.com/Jacobcdsmith/kairos/actions/workflows/ci.yml/badge.svg)](https://github.com/Jacobcdsmith/kairos/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,203 +25,149 @@ no result it can't point to an exact byte of evidence for.
 [![TUI: Textual](https://img.shields.io/badge/tui-textual-8A2BE2)](docs/tli.md)
 
 [Quick start](#quick-start) ·
-[Why KAIROS](#why-kairos) ·
-[CLI reference](docs/cli.md) ·
-[Terminal Lineage Interface](docs/tli.md) ·
+[Docs](docs/cli.md) ·
+[TLI](docs/tli.md) ·
 [Architecture](docs/architecture.md) ·
-[Status](docs/v0.1-status.md) ·
-[Contributing](CONTRIBUTING.md)
+[Demo](#run-the-demo) ·
+[Status](docs/v0.1-status.md)
 
 </div>
 
 ---
 
 <div align="center">
-<img src="docs/assets/tli-search-evidence.svg" alt="KAIROS Terminal Lineage Interface: a search hit selected in the Explorer pane, its full citation — artifact id, path, locator, parser, provenance layer — rendered in the Evidence pane." width="100%">
+<img src="docs/assets/tli-search-evidence.svg" alt="KAIROS Terminal Lineage Interface: a search hit selected in the Explorer pane, its full citation rendered in the Evidence pane." width="100%">
 
-<sub>`kairos tui` — an actual screenshot, not a mockup. Every field on
-screen is a real column from a real SQLite row.</sub>
+<sub>`kairos tui` — an actual screenshot, not a mockup. Every field on screen is a real column from a real SQLite row.</sub>
 </div>
 
 ---
 
-Most "AI knowledge base" tools ask you to trust a vector index and hope the
-nearest neighbor was the right one. KAIROS doesn't do vibes. It parses your
-docs, code, configs, and logs by their actual structure — headings, AST
-nodes, JSON paths, Kconfig symbols, log lines — and links them with
-explicit, typed, re-derivable relations. Ask it for something and it hands
-you the exact artifact, the exact locator, and the exact rule that put it
-there. No embedding ever gets a vote.
+Most "AI knowledge base" tools ask you to trust a vector index and hope the nearest neighbor was the right one. **KAIROS doesn't do vibes.** It parses your docs, code, configs, and logs by their actual structure — headings, AST nodes, JSON paths, Kconfig symbols, log lines — and links them with explicit, typed, re-derivable relations. Ask it for something and it hands you the exact artifact, the exact locator, and the exact rule that put it there. No embedding ever gets a vote.
 
-It is **not** a chatbot and **not** a generic RAG wrapper. It's a
-source-grounded local workspace: ingest documents, repositories, structured
-configuration, logs, and notes; trace concepts and implementation artifacts
-through those sources via exact, explicit relations (no embeddings, no
-similarity guessing); form curated working sets called **coherence wells**;
-and inspect the exact evidence — down to the line, page, JSON path, or
-Kconfig symbol — behind every result KAIROS gives you. Drive it from a
-scriptable CLI or from `kairos tui`, a full-screen terminal workspace built
-for staying in one place all day.
+It is **not** a chatbot and **not** a generic RAG wrapper. It's a source-grounded local workspace: ingest documents, repositories, configuration, logs, and notes; trace concepts and implementation artifacts through those sources via exact, explicit relations (no embeddings, no similarity guessing); form curated working sets called **coherence wells**; and inspect the exact evidence — down to the line, page, JSON path, or Kconfig symbol — behind every result.
 
-This is the **v0.1 substrate + v0.2-alpha interface**. Both are fully
-usable without any LLM, require no network access, and store everything
-locally in SQLite.
+This is the **v0.1 substrate + v0.2-alpha interface**. Both are fully usable without any LLM, require no network access, and store everything locally in SQLite.
 
-## Why KAIROS
-
-| | |
-|---|---|
-| **Local-first, always** | No cloud dependency, no telemetry, no optional-but-really-mandatory network call. Every read and write stays on your machine, full stop. |
-| **Corpus-native parsing** | Markdown, PDF, JSON, Kconfig-menu JSON, runtime/emulator logs, and Python repositories are each parsed by structure — headings, pages, JSON paths, symbols, sessions, AST nodes — not blindly chunked by byte count. |
-| **Provenance over vibes** | Every search hit, trace node, and shown span carries its artifact id, workspace-relative path, exact locator, parser version, and provenance layer (raw / extracted / derived / user). Nothing is allowed to masquerade as source truth. |
-| **Read-only toward your sources** | KAIROS ingests bytes into a content-addressed, write-once store and never reopens the original file for writing. The only writes it ever makes to *your* data are additive: notes and well membership. |
-| **Cross-document traversal without embeddings** | `kairos trace` walks explicit, typed relations (`heading_contains`, `imports`, `depends_on`, `log_in_session`, ...) built from cross-artifact entity reconciliation — so a bare word in one file's paragraph can reach a sibling document through a shared heading, two hops later, deterministically. |
-| **A real exit code** | Every one of the twelve commands fails loudly and non-zero with an actionable message — never a silent no-op, never a bare traceback. |
+---
 
 ## Quick start
 
-### Prerequisites
-
-- Python 3.12 or newer
-- Nothing else. No database server, no API key, no Docker, no network access required at any point.
-
-### 1. Install
+### One-shot install
 
 ```bash
 git clone https://github.com/Jacobcdsmith/kairos.git
 cd kairos
 
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
+source .venv/bin/activate   # macOS/Linux
+# .venv\Scripts\activate     # Windows
 
-pip install -e ".[dev]"
+pip install -e ".[all]"      # CLI + TUI + dev tooling, one command
 ```
 
-### 2. Drive it from the CLI
+<details open>
+<summary><b>30-second tour</b> — create a workspace, ingest a file, search it:</summary>
 
 ```bash
-# Create a workspace
 kairos init ./my-workspace
 cd my-workspace
-
-# Ingest a file (markdown, text, PDF, JSON, Kconfig-menu JSON, logs, or
-# a directory of Python files with --recursive)
-kairos ingest ../notes/architecture.md
-
-# See what's there
-kairos artifacts
-
-# Full-text search over everything ingested
-kairos search "widget"
-
-# Show one artifact's full parsed structure, with exact locators
+kairos ingest README.md
+kairos search provenance
 kairos show <artifact-id>
-
-# Trace a term or entity through direct matches and explicit relations
-kairos trace "Widgets" --depth 2
-
-# Curate a working set
-kairos well create widget-work --purpose "Everything about the widget system"
-kairos well add widget-work <artifact-id>
-kairos well show widget-work
-
-# Annotate anything you've ingested
-kairos note add <artifact-id> "revisit this after the v0.2 redesign"
-
-# Kconfig symbol lookup, log search with context, environment health
-kairos config CONFIG_WIFI
-kairos logs "connection" --level ERROR --before 2 --after 2
-kairos doctor
+kairos trace "concept" --depth 2
 ```
 
-Run [`scripts/demo.sh`](scripts/demo.sh) for a scripted walkthrough of every
-command against the synthetic fixtures in `tests/fixtures/`.
+Run `kairos demo` for a full 8-command walkthrough against test fixtures (creates a temp workspace, cleans up after itself — no mess, no bash required).
+</details>
 
-### 3. Or drive it from the terminal workspace
-
-Prefer to stay in one place instead of one command at a time? Install the
-optional [Terminal Lineage Interface](docs/tli.md) — same commands, typed
-into a persistent `:command` line, with Explorer/Workspace/Evidence panes
-that keep the last search, trace, or note visibly on screen while you work:
+<details>
+<summary><b>TUI mode</b> — full-screen terminal workspace:</summary>
 
 ```bash
-pip install -e ".[tui]"
-kairos tui
+pip install -e ".[tui]"      # already included with [all]
+kairos tui                   # auto-ingests, tutorial on first run
 ```
 
-Both surfaces call the exact same service layer underneath, so nothing
-about the CLI's guarantees changes by using one over the other — the TUI is
-strictly a nicer window onto it. See [docs/tli.md](docs/tli.md) for the
-full command grammar, keybindings, and current alpha limitations.
+Three panes: Explorer (results list), Workspace (transcript), Evidence (full citation). Keyboard-driven. Same service layer as the CLI. See [docs/tli.md](docs/tli.md).
+</details>
 
-## Release verification
+---
 
-Every claim on this page — offline operation, source immutability, complete
-provenance, explicit relation discipline, FTS integrity — is backed by a
-test that was actually run, plus a build that installs independently of
-this repository checkout. See
-[docs/v0.1-status.md#audit-verification](docs/v0.1-status.md#audit-verification)
-for the exact commands and their actual, current results.
+## Command reference
 
-## The full command surface
+| Command | What it does | Exit codes |
+|---------|-------------|------------|
+| `kairos init` | Create a `.kairos/` workspace | 0 / 1 |
+| `kairos ingest` | Parse files by structure into spans/entities/relations | 0 / 1 |
+| `kairos artifacts` | List ingested files | 0 |
+| `kairos search` | FTS5 full-text search with provenance | 0 / 1 |
+| `kairos show` | Inspect an artifact's parsed structure | 0 / 1 |
+| `kairos trace` | Bidirectional BFS entity trace across documents | 0 / 1 |
+| `kairos config` | Kconfig symbol lookup | 0 / 1 |
+| `kairos logs` | Log search with level/context filters | 0 / 1 |
+| `kairos note` | Add/list user annotations on artifacts/spans | 0 / 1 |
+| `kairos well` | Create/add/show/list coherence wells | 0 / 1 |
+| `kairos doctor` | Workspace health checks | 0 / 2 |
+| `kairos tui` | Launch the Terminal Lineage Interface | 0 |
+| `kairos demo` | Self-contained walkthrough (no external deps) | 0 / 1 |
 
-`init` · `ingest` · `artifacts` · `show` · `search` · `trace` · `note add` /
-`note list` · `well create` / `well add` / `well remove` / `well show` /
-`well list` · `config` · `logs` · `doctor` · `tui`
+Every command fails with a non-zero exit code and an actionable message — never a bare traceback, never a silent no-op. Full reference with options in [docs/cli.md](docs/cli.md).
 
-See [docs/cli.md](docs/cli.md) for the complete reference with options and
-example output for every command, and [docs/tli.md](docs/tli.md) for the
-Terminal Lineage Interface's command grammar, keybindings, and provenance
-legend.
+---
+
+## Run the demo
+
+```bash
+kairos demo
+```
+
+Creates a temporary workspace, ingests all parser fixture types (Markdown, JSON, Kconfig, logs, Python AST, PDF), runs search, show, trace, wells, and doctor — then cleans up. **No bash required, works on Windows natively.** The demo is also available as a [shell script](scripts/demo.sh) for CI/offline environments.
+
+---
+
+## Why KAIROS
+
+| | |
+|---|---|
+| **Local-first, always** | No cloud, no telemetry, no optional-but-really-mandatory network call. Every read and write stays on your machine. |
+| **Corpus-native parsing** | Markdown, PDF, JSON, Kconfig-menu JSON, logs, Python repos — each parsed by structure (headings, pages, JSON paths, symbols, sessions, AST nodes), not blindly chunked by byte count. |
+| **Provenance over vibes** | Every result carries its artifact id, workspace-relative path, exact locator, parser version, and provenance layer (raw / extracted / derived / user). Nothing masquerades as source truth. |
+| **Read-only toward your sources** | KAIROS ingests bytes into a content-addressed, write-once store and never reopens the original file for writing. The only writes to *your* data are additive: notes and well membership. |
+| **Cross-document trace without embeddings** | `kairos trace` walks explicit, typed relations (`heading_contains`, `imports`, `depends_on`, ...) — so a bare word in one file can reach a sibling document through a shared heading, two hops later, deterministically. |
+| **Real exit codes** | Every command fails loudly and non-zero with an actionable message — never a silent no-op, never a bare traceback. |
+
+---
 
 ## How it's built
 
-- **Storage**: SQLite as the canonical store, nine tables used verbatim
-  against the spec (`artifacts`, `source_spans`, `entities`, `mentions`,
-  `relations`, `notes`, `coherence_wells`, `well_members`, `events`), plus an
-  FTS5 virtual table with sync triggers for full-text search — no separate
-  search service, no vector database.
-- **Migrations**: a single hand-written Alembic migration, run
-  programmatically by `kairos init`.
-- **Layering**: `domain/` (pure Python, zero framework imports) →
-  `infrastructure/` (SQLAlchemy, parsers, filesystem, git) → `services/`
-  (application logic) → `cli/` (Typer + Rich) and `tui/` (Textual, optional)
-  as two independent presentation surfaces over the same services. See
-  [CONTRIBUTING.md](CONTRIBUTING.md#architecture-rules) for the enforced
-  boundaries.
-- **Quality gate**: Python 3.12+ strict typing end to end, Pydantic v2 at
-  every process boundary, Ruff for format+lint, Pyright in strict mode, and
-  a pytest suite covering every parser's well-formed *and* malformed path,
-  full CLI integration coverage, and headless Pilot coverage of the TUI.
+- **Storage**: SQLite as the canonical store (9 tables), plus an FTS5 virtual table with sync triggers — no separate search service, no vector database.
+- **Migrations**: single Alembic migration, run programmatically by `kairos init`.
+- **Layering**: `domain/` (pure Python, zero framework imports) → `infrastructure/` → `services/` → `cli/` + `tui/` (two independent surfaces over the same services).
+- **Quality gate**: Python 3.12+ strict typing end to end, Pydantic v2 at every boundary, Ruff format+lint, Pyright strict mode, pytest suite covering every parser path + CLI integration + TUI headless Pilot. See [CONTRIBUTING.md](CONTRIBUTING.md#architecture-rules) for the enforced architecture boundaries.
 
-Full detail in [docs/architecture.md](docs/architecture.md), including the
-provenance model, the parser registry, and the explicit non-goals for this
-milestone.
+Full detail in [docs/architecture.md](docs/architecture.md), including the provenance model, the parser registry, and trace algorithm.
+
+---
 
 ## What v0.1 doesn't do (on purpose)
 
-Hardware/embedded systems, device clients, simulations or virtual
-companions, remote node management, external messaging integrations, cloud
-services, multi-agent orchestration, autonomous background execution,
-self-modification, and model inference or model-provider integration are
-all explicitly out of scope for this milestone — not omissions, a boundary
-the project is designed around. See
-[docs/architecture.md#non-goals-v01](docs/architecture.md#non-goals-v01) and
-[docs/v0.1-status.md](docs/v0.1-status.md) for the full picture of what's in,
-what's out, and what a later milestone might still add within this same
-local-framework scope.
+<details>
+<summary>These are explicit non-goals for this milestone, not omissions:</summary>
+
+- Hardware/embedded systems, device clients, simulations or virtual companions
+- Remote node management, cloud services, external messaging integrations
+- Multi-agent orchestration, autonomous background execution, self-modification
+- Model inference, LLM integration, embeddings, vector similarity
+
+See [docs/architecture.md#non-goals-v01](docs/architecture.md#non-goals-v01) and [docs/v0.1-status.md](docs/v0.1-status.md) for the full picture.
+</details>
+
+---
 
 ## Contributing
 
-Bug reports, feature ideas, and pull requests are welcome — see
-[CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, architecture
-rules, and the scope boundary above (read that part first, it'll save you
-some work). Please also review the [Code of Conduct](CODE_OF_CONDUCT.md).
-Found a security issue? See [SECURITY.md](SECURITY.md) rather than filing a
-public issue.
+Bug reports, feature ideas, and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, architecture rules, and scope boundary. Please also review the [Code of Conduct](CODE_OF_CONDUCT.md). Found a security issue? See [SECURITY.md](SECURITY.md).
 
 ## License
 

@@ -1,54 +1,97 @@
-/* KAIROS Terminal Lineage Interface — restrained terminal aesthetic.
-   Deep charcoal background, muted dividers, no gradients, no rounded
-   "card" chrome. Provenance is always labeled in text, never color-only. */
+/* KAIROS Terminal Lineage Interface — v2 visual identity.
+   Deep midnight palette with cyan/amber accents. Unicode-aware borders.
+   Provenance is always labeled in text, never color-only. */
 
 Screen {
-    background: $surface;
+    background: #0d1117;
+    color: #c9d1d9;
 }
+
+/* ── Header ────────────────────────────────────────────────────────── */
 
 #header-line {
     height: 1;
-    background: $panel;
-    color: $text;
+    background: #161b22;
+    color: #58a6ff;
     padding: 0 1;
-    border-bottom: solid $panel-lighten-1;
+    border-bottom: solid #30363d;
+    text-style: bold;
 }
+
+/* ── Pane container ────────────────────────────────────────────────── */
 
 #panes {
     height: 1fr;
 }
 
+/* ── Explorer pane (left) ──────────────────────────────────────────── */
+
 #explorer-pane {
     width: 30%;
-    border-right: solid $panel-lighten-1;
+    border-right: thick #21262d;
+    background: #0d1117;
+    scrollbar-color: #30363d;
+    scrollbar-color-hover: #58a6ff;
 }
+
+#explorer-pane > .list-view--highlight {
+    background: #161b22;
+}
+
+ExplorerPane > ListItem {
+    padding: 0 1;
+    border-bottom: solid #161b22;
+}
+
+ExplorerPane > ListItem:hover {
+    background: #161b22;
+}
+
+ExplorerPane > ListItem.-highlight {
+    background: #1c2128;
+    border-left: thick #58a6ff;
+    padding-left: 0;
+}
+
+/* ── Workspace pane (center) ───────────────────────────────────────── */
 
 #workspace-pane {
     width: 1fr;
-    border-right: solid $panel-lighten-1;
+    border-right: thick #21262d;
     padding: 0 1;
+    background: #0d1117;
+    scrollbar-color: #30363d;
+    scrollbar-color-hover: #58a6ff;
 }
+
+/* ── Evidence pane (right) ─────────────────────────────────────────── */
 
 #evidence-container {
     width: 32%;
+    background: #0d1117;
 }
 
 #evidence-title {
     height: 1;
-    background: $panel;
-    color: $text-muted;
+    background: #161b22;
+    color: #8b949e;
     padding: 0 1;
+    text-style: bold;
+    border-bottom: solid #21262d;
 }
 
 #evidence-pane {
-    padding: 0 1;
+    padding: 1;
     height: 1fr;
     overflow-y: auto;
+    background: #0d1117;
+    color: #c9d1d9;
+    scrollbar-color: #30363d;
+    scrollbar-color-hover: #58a6ff;
 }
 
-/* Responsive layout: see docs/tli-implementation-plan.md's Layouts section.
-   >=120 cols: all three panes. 80-119: Evidence hidden (Tab still reaches
-   it — see app.py's focus cycle). <80: Explorer and Evidence both hidden. */
+/* ── Responsive layout ─────────────────────────────────────────────── */
+
 #panes.mode-medium #evidence-container {
     display: none;
 }
@@ -61,26 +104,40 @@ Screen {
     display: none;
 }
 
+/* ── Command line ──────────────────────────────────────────────────── */
+
 #command-line {
     dock: bottom;
     height: 3;
+    background: #161b22;
+    border: tall #30363d;
+    color: #c9d1d9;
 }
+
+#command-line:focus {
+    border: tall #58a6ff;
+}
+
+/* ── Status line ───────────────────────────────────────────────────── */
 
 #status-line {
     dock: bottom;
     height: 1;
-    background: $panel;
-    color: $text-muted;
+    background: #161b22;
+    color: #8b949e;
     padding: 0 1;
+    border-top: solid #21262d;
 }
+
+/* ── Help overlay ──────────────────────────────────────────────────── */
 
 HelpScreen {
     align: center middle;
 }
 
 #help-container {
-    background: $surface;
-    border: solid $panel-lighten-1;
+    background: #161b22;
+    border: heavy #58a6ff;
     width: 90%;
     height: 90%;
     padding: 1 2;
@@ -89,15 +146,18 @@ HelpScreen {
 #help-text {
     width: 100%;
     height: 100%;
+    color: #c9d1d9;
 }
+
+/* ── Well picker overlay ───────────────────────────────────────────── */
 
 WellPickerScreen {
     align: center middle;
 }
 
 #well-picker-container {
-    background: $surface;
-    border: solid $panel-lighten-1;
+    background: #161b22;
+    border: heavy #f0883e;
     width: 70%;
     height: 70%;
     padding: 1 2;
@@ -105,4 +165,114 @@ WellPickerScreen {
 
 #well-picker-list {
     height: 1fr;
+}
+
+#well-picker-list > ListItem {
+    padding: 0 1;
+    border-bottom: solid #21262d;
+}
+
+#well-picker-list > ListItem.-highlight {
+    background: #1c2128;
+    border-left: thick #f0883e;
+}
+
+/* ── Fuzzy finder overlay ──────────────────────────────────────────── */
+
+FuzzyFinderScreen {
+    align: center middle;
+}
+
+#fuzzy-container {
+    background: #161b22;
+    border: heavy #58a6ff;
+    width: 80%;
+    height: 70%;
+    padding: 0;
+}
+
+#fuzzy-input {
+    dock: top;
+    height: 3;
+    background: #0d1117;
+    border: none;
+    color: #c9d1d9;
+    padding: 0 1;
+}
+
+#fuzzy-input:focus {
+    border: none;
+}
+
+#fuzzy-list {
+    height: 1fr;
+    background: #0d1117;
+}
+
+#fuzzy-list > ListItem {
+    padding: 0 1;
+    border-bottom: solid #161b22;
+}
+
+#fuzzy-list > ListItem.-highlight {
+    background: #1c2128;
+    border-left: thick #58a6ff;
+}
+
+/* ── Tab bar ───────────────────────────────────────────────────────── */
+
+#tab-bar {
+    height: 1;
+    background: #161b22;
+    border-bottom: solid #21262d;
+    layout: horizontal;
+}
+
+.tab-item {
+    padding: 0 2;
+    color: #8b949e;
+    text-style: italic;
+}
+
+.tab-item.active {
+    color: #58a6ff;
+    background: #0d1117;
+    text-style: bold;
+}
+
+.tab-item:hover {
+    color: #c9d1d9;
+}
+
+/* ── Tutorial overlay ──────────────────────────────────────────────── */
+
+TutorialScreen {
+    align: center middle;
+}
+
+#tutorial-container {
+    background: #161b22;
+    border: heavy #58a6ff;
+    width: 80%;
+    height: 80%;
+    padding: 2 3;
+}
+
+#tutorial-title {
+    height: 2;
+    color: #58a6ff;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+#tutorial-body {
+    height: 1fr;
+    color: #c9d1d9;
+    padding: 1 0;
+}
+
+#tutorial-progress {
+    height: 1;
+    color: #8b949e;
+    padding: 1 0 0 0;
 }

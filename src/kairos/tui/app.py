@@ -18,8 +18,10 @@ from textual.widgets import Input, ListView
 
 from kairos.services.context import RuntimeContext
 from kairos.tui import controller
+from kairos.tui.screens.fuzzy_finder import FuzzyFinderScreen
 from kairos.tui.screens.help import HelpScreen
 from kairos.tui.screens.main import MainScreen
+from kairos.tui.screens.tutorial import TutorialScreen
 from kairos.tui.screens.well_picker import WellPickerScreen
 from kairos.tui.state import Selection, TuiState
 from kairos.tui.widgets.evidence_pane import EvidencePane, citation_text, excerpt_text
@@ -38,7 +40,7 @@ class KairosApp(App[None]):
     CSS_PATH = str(_STYLES_PATH)
 
     BINDINGS = [
-        Binding("ctrl+p", "focus_command_line", "Command line", show=False),
+        Binding("ctrl+p", "open_fuzzy_finder", "Find"),
         Binding("ctrl+r", "history_search", "History"),
         Binding("tab", "cycle_focus(false)", "Cycle pane", show=False),
         Binding("shift+tab", "cycle_focus(true)", "Cycle pane (reverse)", show=False),
@@ -47,6 +49,7 @@ class KairosApp(App[None]):
         Binding("c", "copy_citation", "Copy citation"),
         Binding("y", "copy_excerpt", "Copy excerpt"),
         Binding("r", "refresh_view", "Refresh", show=False),
+        Binding("t", "show_tutorial", "Tutorial"),
         Binding("question_mark", "show_help", "Help"),
         Binding("q", "quit_app", "Quit"),
     ]
@@ -61,7 +64,24 @@ class KairosApp(App[None]):
     def on_mount(self) -> None:
         self.push_screen(MainScreen())
         self._apply_layout_mode()
+        show_tutorial = self._auto_ingest_workspace()
         self.run_command(":home")
+        if show_tutorial:
+            self.call_later(self._show_tutorial_if_first_run)
+
+    def _auto_ingest_workspace(self) -> bool:
+        from kairos.services.artifacts import list_artifacts
+
+        was_empty = not list_artifacts(self.runtime_ctx)
+        self.run_command(":ingest . --recursive")
+        return was_empty
+
+    async def _show_tutorial_if_first_run(self) -> None:
+        from kairos.services.artifacts import list_artifacts
+
+        artifacts = list_artifacts(self.runtime_ctx)
+        if len(artifacts) <= 7:
+            self.push_screen(TutorialScreen())
 
     def on_resize(self) -> None:
         self._apply_layout_mode()
@@ -119,6 +139,17 @@ class KairosApp(App[None]):
     def action_focus_command_line(self) -> None:
         self.query_one("#command-line", Input).focus()
 
+    def action_open_fuzzy_finder(self) -> None:
+        def handle_result(item: object) -> None:
+            if item is None:
+                return
+            from kairos.tui.screens.fuzzy_finder import FinderItem
+
+            if isinstance(item, FinderItem) and item.kind == "artifact":
+                self.run_command(f":show {item.target_id}")
+
+        self.push_screen(FuzzyFinderScreen(self.runtime_ctx), handle_result)
+
     def action_start_search(self) -> None:
         command_line = self.query_one("#command-line", Input)
         command_line.value = ":search "
@@ -139,6 +170,9 @@ class KairosApp(App[None]):
 
     def action_show_help(self) -> None:
         self.push_screen(HelpScreen())
+
+    def action_show_tutorial(self) -> None:
+        self.push_screen(TutorialScreen())
 
     def action_refresh_view(self) -> None:
         if isinstance(self.focused, Input):

@@ -1,9 +1,3 @@
-"""The Explorer pane: "what can I navigate from here?" Renders a list keyed
-off the current mode's ``last_result``, one row per navigable item, each
-visibly tagged with its provenance layer (never color-only — see
-docs/tli.md's provenance legend).
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -21,6 +15,24 @@ from kairos.schemas.search import SearchHit, SearchResult
 from kairos.schemas.trace import TraceNode, TraceResult
 from kairos.schemas.well import WellDetail, WellMemberResult, WellSummary
 from kairos.tui.state import SelectionKind, TuiState, as_list_of
+
+_KIND_GLYPH = {
+    "markdown": "\u25a6",
+    "text": "\u25a1",
+    "pdf": "\u229a",
+    "json": "\u2731",
+    "kconfig": "\u2699",
+    "log": "\u2261",
+    "repository": "\u2442",
+    "python": "\u03bb",
+}
+
+_LAYER_GLYPH = {
+    "raw": "\u25cb",
+    "extracted": "\u25cf",
+    "derived": "\u25c7",
+    "user": "\u270e",
+}
 
 _LAYER_TAG = {"raw": "RAW", "extracted": "EXTRACTED", "derived": "DERIVED", "user": "USER"}
 
@@ -50,9 +62,6 @@ class ExplorerPane(ListView):
         for row in rows:
             self.append(ExplorerItem(row))
         if rows:
-            # ListView.clear() resets `index` to None; without this, the
-            # first item is never highlighted and Enter has nothing to
-            # select until the user presses Up/Down at least once.
             self.index = 0
 
     def selected_reference(self) -> tuple[SelectionKind, str] | None:
@@ -87,18 +96,25 @@ def _rows_for(state: TuiState) -> list[_Row]:
     if (notes := as_list_of(result, NoteResult)) is not None:
         return [_note_row(n) for n in notes]
     if result is None and state.mode == "home":
-        return [_Row("No local activity yet.", "", None, None)]
+        return [_Row("\u25cb  No local activity yet.", "", None, None)]
     return []
 
 
 def _activity_row(event: ActivityEvent) -> _Row:
-    return _Row(event.event_type, event.occurred_at.isoformat(timespec="seconds"), None, None)
+    return _Row(
+        f"\u25b8  {event.event_type}",
+        event.occurred_at.isoformat(timespec="seconds"),
+        None,
+        None,
+    )
 
 
 def _artifact_row(a: ArtifactSummary) -> _Row:
+    glyph = _KIND_GLYPH.get(a.kind, "\u25aa")
+    ingested = a.ingested_at.isoformat(timespec="seconds")
     return _Row(
-        f"[{a.kind}] {a.source_path}",
-        f"{a.parse_status} · {a.size_bytes}B · {a.ingested_at.isoformat(timespec='seconds')}",
+        f"{glyph}  [{a.kind}] {a.source_path}",
+        f"{a.parse_status} \u00b7 {a.size_bytes}B \u00b7 {ingested}",
         "artifact",
         a.id,
     )
@@ -106,54 +122,70 @@ def _artifact_row(a: ArtifactSummary) -> _Row:
 
 def _search_hit_row(h: SearchHit) -> _Row:
     tag = _LAYER_TAG[h.provenance.layer]
-    return _Row(h.provenance.source_path, f"{h.provenance.locator_str} · {tag}", "span", h.span_id)
+    glyph = _LAYER_GLYPH.get(h.provenance.layer, "\u25cf")
+    return _Row(
+        f"{glyph}  {h.provenance.source_path}",
+        f"{h.provenance.locator_str} \u00b7 {tag}",
+        "span",
+        h.span_id,
+    )
 
 
 def _span_row(s: SpanResult) -> _Row:
     tag = _LAYER_TAG[s.provenance.layer]
+    glyph = _LAYER_GLYPH.get(s.provenance.layer, "\u25cf")
     first_line = s.text_content.strip().splitlines()[0] if s.text_content.strip() else s.span_kind
-    label = f"[{s.span_kind}] {first_line[:60]}"
-    return _Row(label, f"{s.provenance.locator_str} · {tag}", "span", s.span_id)
+    label = f"  {glyph} [{s.span_kind}] {first_line[:56]}"
+    return _Row(label, f"{s.provenance.locator_str} \u00b7 {tag}", "span", s.span_id)
 
 
 def _trace_node_row(n: TraceNode) -> _Row:
     tag = _LAYER_TAG[n.provenance.layer] if n.provenance else "DERIVED"
     kind: SelectionKind = n.node_kind if n.node_kind in ("entity", "span", "artifact") else "none"
-    return _Row(f"[{n.node_kind}] {n.label[:60]}", tag, kind, n.node_id)
+    glyph = "\u25c6" if n.node_kind == "entity" else "\u25cb" if n.node_kind == "span" else "\u25a1"
+    return _Row(f"{glyph}  [{n.node_kind}] {n.label[:56]}", tag, kind, n.node_id)
 
 
 def _config_rows(result: ConfigSymbolResult) -> list[_Row]:
     rows = [
-        _Row(f"symbol {result.symbol}", f"type={result.symbol_type or '?'}", None, None),
-        _Row(f"default: {result.default or '(none)'}", "", None, None),
-        _Row(f"depends_on: {result.depends_on or '(none)'}", "", None, None),
+        _Row(f"\u2699  symbol {result.symbol}", f"type={result.symbol_type or '?'}", None, None),
+        _Row(f"  \u2514 default: {result.default or '(none)'}", "", None, None),
+        _Row(f"  \u2514 depends_on: {result.depends_on or '(none)'}", "", None, None),
     ]
-    rows.extend(_Row(f"child: {c}", "", None, None) for c in result.children)
+    rows.extend(_Row(f"  \u251c child: {c}", "", None, None) for c in result.children)
     return rows
 
 
 def _log_row(h: LogHit) -> _Row:
     tag = _LAYER_TAG[h.provenance.layer]
-    label = f"line {h.line_number}: {h.message[:50]}"
-    sub = f"{h.level or ''} {h.component or ''} · {tag}".strip()
+    glyph = _LAYER_GLYPH.get(h.provenance.layer, "\u25cf")
+    level_glyph = "\u2717" if h.level == "ERROR" else "\u26a0" if h.level == "WARNING" else "\u25b8"
+    label = f"{glyph}  {level_glyph} line {h.line_number}: {h.message[:46]}"
+    sub = f"{h.level or ''} {h.component or ''} \u00b7 {tag}".strip()
     return _Row(label, sub, "span", h.provenance.locator_str)
 
 
 def _doctor_row(c: DoctorCheck) -> _Row:
+    glyph = "\u2713" if c.ok else "\u2717"
+    color = "green" if c.ok else "red"
     return _Row(
-        c.name, ("PASS" if c.ok else "FAIL") + " · " + c.detail[:60], "doctor_check", c.name
+        f"[{color}]{glyph}[/{color}]  {c.name}",
+        c.detail[:56],
+        "doctor_check",
+        c.name,
     )
 
 
 def _well_summary_row(w: WellSummary) -> _Row:
-    return _Row(w.name, f"{w.purpose} · {w.member_count} member(s)", "well", w.name)
+    sub = f"{w.purpose} \u00b7 {w.member_count} member(s)"
+    return _Row(f"\u25c8  {w.name}", sub, "well", w.name)
 
 
 def _well_member_row(m: WellMemberResult) -> _Row:
     kind: SelectionKind = "artifact" if m.target_kind == "artifact" else "span"
-    return _Row(m.target_id, m.note or "", kind, m.target_id)
+    return _Row(f"\u251c  {m.target_id}", m.note or "", kind, m.target_id)
 
 
 def _note_row(n: NoteResult) -> _Row:
-    sub = f"on {n.target_id} · {n.created_at.isoformat(timespec='seconds')}"
-    return _Row(n.body[:60], sub, "note", n.id)
+    sub = f"on {n.target_id} \u00b7 {n.created_at.isoformat(timespec='seconds')}"
+    return _Row(f"\u270e  {n.body[:56]}", sub, "note", n.id)

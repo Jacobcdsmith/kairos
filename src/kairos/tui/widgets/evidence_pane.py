@@ -23,25 +23,32 @@ from kairos.schemas.well import WellDetail, WellSummary
 from kairos.tui.state import TuiState, as_list_of
 
 _NOT_SIMILARITY_NOTICE = (
-    "This is an explicit deterministic relation.\nIt is not a semantic similarity claim."
+    "\u25c6 This is an explicit deterministic relation.\n"
+    "  It is not a semantic similarity claim."
 )
+
+_LAYER_GLYPH = {
+    "raw": "\u25cb",
+    "extracted": "\u25cf",
+    "derived": "\u25c7",
+    "user": "\u270e",
+}
 
 
 def _artifact_summary_lines(a: ArtifactSummary) -> str:
     return (
-        f"artifact_id: {a.id}\n"
-        f"path: {escape(a.source_path)}\n"
-        f"kind: {a.kind}\n"
-        f"parser: {a.parser_name} v{a.parser_version}\n"
-        f"parse_status: {a.parse_status}\n"
-        f"sha256: {a.sha256}\n"
-        f"ingested_at: {a.ingested_at.isoformat(timespec='seconds')}"
+        f"\u25a1 artifact\n"
+        f"  id: {a.id}\n"
+        f"  path: {escape(a.source_path)}\n"
+        f"  kind: {a.kind}\n"
+        f"  parser: {a.parser_name} v{a.parser_version}\n"
+        f"  status: {a.parse_status}\n"
+        f"  sha256: {a.sha256[:16]}...\n"
+        f"  ingested: {a.ingested_at.isoformat(timespec='seconds')}"
     )
 
 
 class EvidencePane(Static):
-    # Static widgets aren't focusable by default; Evidence is one of the
-    # four panes Tab/Shift+Tab must be able to cycle focus into.
     can_focus = True
 
     def refresh_from_state(self, state: TuiState) -> None:
@@ -53,24 +60,24 @@ def _render(state: TuiState) -> str:
     result = state.last_result
 
     if isinstance(result, ConfigSymbolResult):
-        # A single-record result: always shown, no selection required.
         body = provenance_lines(result.provenance)
         extra = (
-            f"prompt: {result.prompt or '(none)'}\n"
-            f"choices: {', '.join(result.choices) or '(none)'}\n"
-            f"children: {', '.join(result.children) or '(none)'}"
+            f"\u2699 symbol: {result.symbol}\n"
+            f"  prompt: {result.prompt or '(none)'}\n"
+            f"  choices: {', '.join(result.choices) or '(none)'}\n"
+            f"  children: {', '.join(result.children) or '(none)'}"
         )
         return f"{extra}\n\n{body}"
 
     if isinstance(result, DoctorReport):
         check = next((c for c in result.checks if c.name == selection.id), None)
         if check is None:
-            return "Select a check to see its full detail."
-        status = "PASS" if check.ok else "FAIL"
-        return f"check: {check.name}\nstatus: {status}\ndetail: {escape(check.detail)}"
+            return "\u25cb Select a check to see its full detail."
+        status = "\u2713 PASS" if check.ok else "\u2717 FAIL"
+        return f"\u2699 check: {check.name}\n  status: {status}\n  detail: {escape(check.detail)}"
 
     if selection.kind == "none" or selection.id is None:
-        return "Nothing selected.\nPress Enter on an item in Explorer to inspect it."
+        return "\u25cb Nothing selected.\n  Press Enter on an item in Explorer to inspect it."
 
     if (artifacts := as_list_of(result, ArtifactSummary)) is not None:
         artifact = next((a for a in artifacts if a.id == selection.id), None)
@@ -96,16 +103,17 @@ def _render(state: TuiState) -> str:
         node = next((n for n in result.nodes if n.node_id == selection.id), None)
         if node is None:
             return "Selected item is not in the current result set."
-        lines = [f"label: {escape(node.label)}", f"kind: {node.node_kind}"]
+        lines = [f"\u25c6 {escape(node.label)}", f"  kind: {node.node_kind}"]
         if node.provenance is not None:
             lines.append(provenance_lines(node.provenance))
         touching = [e for e in result.edges if selection.id in (e.subject_id, e.object_id)]
         if touching:
             lines.append("")
-            lines.append("relations:")
+            lines.append("  relations:")
             for edge in touching:
                 lines.append(
-                    f"  {edge.subject_id[:8]} --{edge.predicate}--> {edge.object_id[:8]}  "
+                    f"    {edge.subject_id[:8]} \u2500\u2500{edge.predicate}\u2500\u2500> "
+                    f"{edge.object_id[:8]}  "
                     f"({edge.layer}, rule={edge.derivation_rule or 'n/a'})"
                 )
             if any(e.layer == "derived" for e in touching):
@@ -125,8 +133,10 @@ def _render(state: TuiState) -> str:
             return "Selected item is not in the current result set."
         created_at = well.created_at.isoformat(timespec="seconds")
         return (
-            f"well: {well.name}\npurpose: {escape(well.purpose)}\n"
-            f"members: {well.member_count}\ncreated_at: {created_at}"
+            f"\u25c8 well: {well.name}\n"
+            f"  purpose: {escape(well.purpose)}\n"
+            f"  members: {well.member_count}\n"
+            f"  created: {created_at}"
         )
 
     if isinstance(result, WellDetail):
@@ -134,9 +144,11 @@ def _render(state: TuiState) -> str:
         if member is None:
             return "Selected item is not in the current result set."
         return (
-            f"well: {result.well.name}\ntarget_kind: {member.target_kind}\n"
-            f"target_id: {member.target_id}\nnote: {escape(member.note or '(none)')}\n"
-            f"added_at: {member.added_at.isoformat(timespec='seconds')}"
+            f"\u25c8 well: {result.well.name}\n"
+            f"  target_kind: {member.target_kind}\n"
+            f"  target_id: {member.target_id}\n"
+            f"  note: {escape(member.note or '(none)')}\n"
+            f"  added: {member.added_at.isoformat(timespec='seconds')}"
         )
 
     if (notes := as_list_of(result, NoteResult)) is not None:
@@ -144,20 +156,17 @@ def _render(state: TuiState) -> str:
         if note is None:
             return "Selected item is not in the current result set."
         return (
-            f"note_id: {note.id}\ntarget_id: {note.target_id} ({note.target_kind})\n"
-            f"created_at: {note.created_at.isoformat(timespec='seconds')}\n\n{escape(note.body)}"
+            f"\u270e note\n"
+            f"  id: {note.id}\n"
+            f"  target: {note.target_id} ({note.target_kind})\n"
+            f"  created: {note.created_at.isoformat(timespec='seconds')}\n\n"
+            f"  {escape(note.body)}"
         )
 
     return "Nothing to show for the current selection."
 
 
 def _envelope_and_excerpt(state: TuiState) -> tuple[ProvenanceEnvelope | None, str | None]:
-    """The raw (unescaped) citation envelope and source excerpt for the
-    current selection, if any — the shared lookup behind ``citation_text``
-    and ``excerpt_text`` (the payloads for the ``c``/``y`` keybindings).
-    Deliberately separate from ``_render``, which returns an already
-    Rich-escaped display string unsuitable for clipboard/plain-text copy.
-    """
     selection = state.selection
     result = state.last_result
 
@@ -184,16 +193,10 @@ def _envelope_and_excerpt(state: TuiState) -> tuple[ProvenanceEnvelope | None, s
 
 
 def citation_text(state: TuiState) -> str | None:
-    """Plain-text citation for the ``c`` keybinding, or ``None`` if the
-    current selection has no citation to copy.
-    """
     envelope, _ = _envelope_and_excerpt(state)
     return provenance_lines(envelope) if envelope is not None else None
 
 
 def excerpt_text(state: TuiState) -> str | None:
-    """Plain-text source excerpt for the ``y`` keybinding, or ``None`` if
-    the current selection has no excerpt to copy.
-    """
     _, excerpt = _envelope_and_excerpt(state)
     return excerpt

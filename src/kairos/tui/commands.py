@@ -29,6 +29,8 @@ _KNOWN_COMMANDS = frozenset(
         "refresh",
         "quit",
         "note",
+        "ingest",
+        "tutorial",
     }
 )
 

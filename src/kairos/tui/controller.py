@@ -16,6 +16,7 @@ from kairos.services.artifacts import list_artifacts as list_artifacts_service
 from kairos.services.config_query import get_config_symbol
 from kairos.services.context import RuntimeContext
 from kairos.services.doctor import run_doctor
+from kairos.services.ingest import ingest as ingest_service
 from kairos.services.logs_query import query_logs
 from kairos.services.notes import add_note, list_notes
 from kairos.services.search import search as search_service
@@ -239,6 +240,16 @@ def _help(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
     return _record(state, mode="help", command=command.raw, status="success", summary="help")
 
 
+def _tutorial(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+    return _record(
+        state,
+        mode=state.mode,
+        command=command.raw,
+        status="success",
+        summary="Press 't' to open the tutorial overlay, or Esc to close it.",
+    )
+
+
 def _well(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
     sub = command.args[0] if command.args else "list"
     if sub == "list":
@@ -316,6 +327,37 @@ def _note(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
     raise KairosError(f"Usage: :note list <target-id> | :note add <target-id> <text> (got {sub!r})")
 
 
+def _ingest(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+    from pathlib import Path
+
+    path_arg = command.args[0] if command.args else "."
+    recursive = "--recursive" in command.args or "-r" in command.args
+
+    path = Path(path_arg)
+    if not path.is_absolute():
+        path = runtime_ctx.workspace.root / path
+
+    report = ingest_service(runtime_ctx, path, recursive=recursive)
+    total = len(report.outcomes)
+    new_count = sum(1 for o in report.outcomes if not o.already_ingested)
+    diag_count = sum(len(o.diagnostics) for o in report.outcomes)
+
+    summary_parts = [f"{new_count} new artifact(s)"]
+    if total != new_count:
+        summary_parts.append(f"{total - new_count} already ingested")
+    if diag_count:
+        summary_parts.append(f"{diag_count} diagnostic(s)")
+
+    return _record(
+        state,
+        mode="artifacts",
+        command=command.raw,
+        status="success",
+        summary=", ".join(summary_parts),
+        last_result=list_artifacts_service(runtime_ctx),
+    )
+
+
 _HANDLERS = {
     "home": _home,
     "artifacts": _artifacts,
@@ -327,6 +369,8 @@ _HANDLERS = {
     "doctor": _doctor,
     "history": _history,
     "help": _help,
+    "tutorial": _tutorial,
     "well": _well,
     "note": _note,
+    "ingest": _ingest,
 }
