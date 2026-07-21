@@ -180,9 +180,10 @@ def _render_result(state: TuiState) -> object:
 
 
 def _render_dashboard(d: DashboardResult) -> object:
+    from rich.console import Group
     from rich.table import Table
 
-    lines: list[object] = []
+    items: list[object] = []
 
     # Metrics row
     metrics = Table(show_header=False, show_lines=False, padding=(0, 3), box=None)
@@ -197,8 +198,8 @@ def _render_dashboard(d: DashboardResult) -> object:
     ]:
         metrics.add_row(label, f"[{color}]{value}[/{color}]")
 
-    lines.append(metrics)
-    lines.append("")
+    items.append(metrics)
+    items.append("")
 
     # Breakdown by kind
     if d.artifacts_by_kind:
@@ -217,10 +218,10 @@ def _render_dashboard(d: DashboardResult) -> object:
                 "[green]" + str(bk.status_ok) + "[/green]",
                 f"[{err_style}]{bk.status_error}[/{err_style}]",
             )
-        lines.append(breakdown)
+        items.append(breakdown)
 
     if d.parse_errors:
-        lines.append(f"[red]⚠  {d.parse_errors} parse error(s) across all artifacts[/red]")
+        items.append(f"[red]⚠  {d.parse_errors} parse error(s) across all artifacts[/red]")
 
     # Recent activity
     if d.recent_activity:
@@ -231,7 +232,7 @@ def _render_dashboard(d: DashboardResult) -> object:
         events.add_column("event", style="cyan")
         for ev in d.recent_activity:
             events.add_row(ev.occurred_at.isoformat(timespec="minutes"), ev.event_type)
-        lines.append("")
-        lines.append(events)
+        items.append("")
+        items.append(events)
 
-    return lines
+    return Group(*items)
