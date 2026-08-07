@@ -11,7 +11,7 @@ pytest.importorskip("pytest_asyncio")
 
 from kairos.services.context import RuntimeContext
 from kairos.tui.app import KairosApp
-from kairos.tui.widgets.explorer_pane import ExplorerPane, _highlighted
+from kairos.tui.widgets.explorer_pane import ExplorerPane, highlighted
 
 WIDE = (140, 40)
 
@@ -24,17 +24,17 @@ async def _type_command(pilot: object, text: str) -> None:
 
 
 def test_highlighted_wraps_case_insensitive_match() -> None:
-    result = _highlighted("The Widget Manual", "widget")
+    result = highlighted("The Widget Manual", "widget")
     assert "[reverse]Widget[/reverse]" in result
 
 
 def test_highlighted_escapes_when_no_match() -> None:
-    assert _highlighted("plain text", "nope") == "plain text"
+    assert highlighted("plain text", "nope") == "plain text"
 
 
 def test_highlighted_handles_empty_term() -> None:
-    assert _highlighted("plain text", None) == "plain text"
-    assert _highlighted("plain text", "") == "plain text"
+    assert highlighted("plain text", None) == "plain text"
+    assert highlighted("plain text", "") == "plain text"
 
 
 @pytest.mark.asyncio

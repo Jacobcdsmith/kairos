@@ -66,7 +66,7 @@ class _Row:
     target_id: str | None
 
 
-def _highlighted(text: str, term: str | None) -> str:
+def highlighted(text: str, term: str | None) -> str:
     """Escape ``text`` for Rich markup, wrapping case-insensitive matches of
     ``term`` in a reverse-video span. Escaping happens per-chunk so the
     highlight markup itself is never escaped away.
@@ -92,7 +92,7 @@ def _highlighted(text: str, term: str | None) -> str:
 class ExplorerItem(ListItem):
     def __init__(self, row: _Row, index: int, query_term: str | None = None) -> None:
         gutter = f"{index + 1:>4} " if (index + 1) % _GUTTER_EVERY == 0 else "     "
-        text = f"{gutter}{_highlighted(row.label, query_term)}"
+        text = f"{gutter}{highlighted(row.label, query_term)}"
         if row.sublabel:
             text += f"\n     [dim]{escape(row.sublabel)}[/dim]"
         super().__init__(Static(text))
@@ -118,7 +118,7 @@ class ExplorerPane(ListView):
             return item.kind, item.target_id
         return None
 
-    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+    def on_list_viewhighlighted(self, event: ListView.Highlighted) -> None:
         self.call_after_refresh(self._update_scroll_indicators)
 
     def _update_scroll_indicators(self) -> None:

@@ -10,7 +10,7 @@ _WELL_GLYPH = "◈"
 _OFFLINE_GLYPH = "●"
 
 
-def _format_size(num_bytes: int) -> str:
+def format_size(num_bytes: int) -> str:
     size = float(num_bytes)
     for unit in ("B", "KB", "MB", "GB"):
         if size < 1024 or unit == "GB":
@@ -28,7 +28,7 @@ class HeaderLine(Static):
         well = escape(state.active_well) if state.active_well else "none"
         stats = (
             f"{state.artifact_count} artifact(s) · "
-            f"{_format_size(state.workspace_size_bytes)} · "
+            f"{format_size(state.workspace_size_bytes)} · "
             f"{state.well_count} well(s)"
         )
         runtime = ""

@@ -11,7 +11,7 @@ pytest.importorskip("pytest_asyncio")
 
 from kairos.services.context import RuntimeContext
 from kairos.tui.app import KairosApp
-from kairos.tui.widgets.header_line import HeaderLine, _format_size
+from kairos.tui.widgets.header_line import HeaderLine, format_size
 from kairos.tui.widgets.status_line import StatusLine
 
 WIDE = (160, 40)
@@ -25,10 +25,10 @@ async def _type_command(pilot: object, text: str) -> None:
 
 
 def test_format_size_units() -> None:
-    assert _format_size(0) == "0B"
-    assert _format_size(512) == "512B"
-    assert _format_size(2048) == "2.0KB"
-    assert _format_size(5 * 1024 * 1024) == "5.0MB"
+    assert format_size(0) == "0B"
+    assert format_size(512) == "512B"
+    assert format_size(2048) == "2.0KB"
+    assert format_size(5 * 1024 * 1024) == "5.0MB"
 
 
 @pytest.mark.asyncio
