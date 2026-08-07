@@ -284,9 +284,12 @@ def _dashboard_rows(d: DashboardResult) -> list[_Row]:
         rows.append(_Row(f"  ▸  {bk.kind}", sub, "artifact", f"dashboard:kind:{bk.kind}"))
     # Recent activity
     for ev in d.recent_activity:
-        rows.append(_Row(
-            f"  ▸  {ev.event_type}",
-            ev.occurred_at.isoformat(timespec="minutes"),
-            None, None,
-        ))
+        rows.append(
+            _Row(
+                f"  ▸  {ev.event_type}",
+                ev.occurred_at.isoformat(timespec="minutes"),
+                None,
+                None,
+            )
+        )
     return rows or [_Row("○  Empty workspace — try :ingest .", "", None, None)]

@@ -26,8 +26,7 @@ from kairos.schemas.well import WellDetail, WellSummary
 from kairos.tui.state import TuiState, as_list_of
 
 _NOT_SIMILARITY_NOTICE = (
-    "\u25c6 This is an explicit deterministic relation.\n"
-    "  It is not a semantic similarity claim."
+    "\u25c6 This is an explicit deterministic relation.\n  It is not a semantic similarity claim."
 )
 
 _LAYER_GLYPH = {
