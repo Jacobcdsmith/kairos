@@ -18,7 +18,7 @@ Standard workflow:
 
 from __future__ import annotations
 
-import os
+import contextlib
 import urllib.parse
 from pathlib import Path
 from typing import Any
@@ -33,7 +33,6 @@ from kairos.domain.locators import (
 from kairos.infrastructure.database.engine import session_scope
 from kairos.infrastructure.database.repositories import (
     get_artifact,
-    get_span,
     list_spans_for_artifact,
 )
 from kairos.schemas.provenance import ProvenanceEnvelope
@@ -46,9 +45,17 @@ from kairos.services.show import show as _show
 from kairos.services.trace import trace as _trace
 from kairos.services.wells import (
     add_member as _well_add,
+)
+from kairos.services.wells import (
     create_well as _well_create,
+)
+from kairos.services.wells import (
     list_all_wells as _list_wells,
+)
+from kairos.services.wells import (
     remove_member as _well_remove,
+)
+from kairos.services.wells import (
     show_well as _well_show,
 )
 
@@ -84,9 +91,7 @@ def _try(fn, **default: Any) -> dict:
         return {"status": "error", "error": f"{type(e).__name__}: {e}"}
 
 
-def _source_link_for_envelope(
-    envelope: ProvenanceEnvelope, workspace_root: Path
-) -> str | None:
+def _source_link_for_envelope(envelope: ProvenanceEnvelope, workspace_root: Path) -> str | None:
     """Build a clickable source link from a provenance envelope."""
     locator = envelope.locator
     source_path = Path(envelope.source_path)
@@ -122,9 +127,7 @@ def _read_bytes_around_locator(
     context_lines: int = 3,
 ) -> dict | None:
     """Read source bytes around a locator and return a snippet dict."""
-    if isinstance(locator, LineRangeLocator):
-        start, end = locator.start_line, locator.end_line
-    elif isinstance(locator, RepoFileLinesLocator):
+    if isinstance(locator, (LineRangeLocator, RepoFileLinesLocator)):
         start, end = locator.start_line, locator.end_line
     else:
         return None
@@ -182,8 +185,8 @@ def kairos_init(path: str | None = None, name: str | None = None) -> dict:
     Returns:
         dict with workspace path on success.
     """
-    from kairos.infrastructure.filesystem.workspace import init_workspace
     from kairos.infrastructure.database.migrate import upgrade_to_head
+    from kairos.infrastructure.filesystem.workspace import init_workspace
 
     def _run():
         root = Path(path).resolve() if path else Path.cwd().resolve()
@@ -221,7 +224,11 @@ def kairos_ingest(path: str = ".", recursive: bool = True) -> dict:
             source_link = None
             for a in artifacts:
                 if a.id == o.artifact.id:
-                    abs_path = Path.cwd() / a.source_path if not Path(a.source_path).is_absolute() else Path(a.source_path)
+                    abs_path = (
+                        Path.cwd() / a.source_path
+                        if not Path(a.source_path).is_absolute()
+                        else Path(a.source_path)
+                    )
                     source_link = abs_path.resolve().as_uri()
                     break
             outcomes.append(
@@ -235,8 +242,7 @@ def kairos_ingest(path: str = ".", recursive: bool = True) -> dict:
                     "relation_count": o.relation_count,
                     "already_ingested": o.already_ingested,
                     "diagnostics": [
-                        {"message": d.message, "severity": d.severity}
-                        for d in o.diagnostics
+                        {"message": d.message, "severity": d.severity} for d in o.diagnostics
                     ],
                     "source_link": source_link,
                 }
@@ -293,9 +299,7 @@ def kairos_search(query: str, limit: int = 20, well: str | None = None) -> dict:
     return _try(_run)
 
 
-def kairos_trace(
-    term: str, depth: int = 2, well: str | None = None
-) -> dict:
+def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict:
     """Bidirectional entity trace with provenance on every edge.
 
     Args:
@@ -489,7 +493,11 @@ def kairos_source_link(artifact_id: str, locator_str: str | None = None) -> dict
             locator = locator_from_json(spans[0].locator_json)
 
         file_uri = abs_path.as_uri()
-        source_link = _make_link(file_uri, locator.start_line, locator.end_line) if isinstance(locator, (LineRangeLocator, RepoFileLinesLocator)) else file_uri
+        source_link = (
+            _make_link(file_uri, locator.start_line, locator.end_line)
+            if isinstance(locator, (LineRangeLocator, RepoFileLinesLocator))
+            else file_uri
+        )
 
         return {
             "artifact_id": artifact_id,
@@ -670,34 +678,23 @@ def kairos_status() -> dict:
     ctx = _ctx()
 
     def _run():
+        import json as _json
+
         from sqlalchemy import text as _text
 
-        import json as _json
         from kairos.infrastructure.database.engine import fts5_is_available
 
         # read config for name/schema_version
         _ws_cfg = {}
-        try:
+        with contextlib.suppress(Exception):
             _ws_cfg = _json.loads(ctx.workspace.config_path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
 
         with session_scope(ctx.session_factory) as session:
-            artifacts = session.execute(
-                _text("SELECT COUNT(*) FROM artifacts")
-            ).scalar() or 0
-            entities = session.execute(
-                _text("SELECT COUNT(*) FROM entities")
-            ).scalar() or 0
-            relations = session.execute(
-                _text("SELECT COUNT(*) FROM relations")
-            ).scalar() or 0
-            spans = session.execute(
-                _text("SELECT COUNT(*) FROM source_spans")
-            ).scalar() or 0
-            wells = session.execute(
-                _text("SELECT COUNT(*) FROM coherence_wells")
-            ).scalar() or 0
+            artifacts = session.execute(_text("SELECT COUNT(*) FROM artifacts")).scalar() or 0
+            entities = session.execute(_text("SELECT COUNT(*) FROM entities")).scalar() or 0
+            relations = session.execute(_text("SELECT COUNT(*) FROM relations")).scalar() or 0
+            spans = session.execute(_text("SELECT COUNT(*) FROM source_spans")).scalar() or 0
+            wells = session.execute(_text("SELECT COUNT(*) FROM coherence_wells")).scalar() or 0
 
         return {
             "workspace": {

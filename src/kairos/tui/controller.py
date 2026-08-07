@@ -223,12 +223,13 @@ def _home(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
         workspace_size_bytes=total_size,
         well_count=total_wells,
     )
+    summary = f"{total_artifacts} artifacts, {total_entities} entities, {total_relations} relations"
     return _record(
         updated_state,
         mode="home",
         command=command.raw,
         status="success",
-        summary=f"{total_artifacts} artifacts, {total_entities} entities, {total_relations} relations",
+        summary=summary,
         last_result=dashboard,
     )
 
