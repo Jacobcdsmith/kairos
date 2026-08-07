@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from rich.markup import escape
 from rich.table import Table
 from rich.text import Text
@@ -179,7 +181,7 @@ def _render_dashboard(d: DashboardResult) -> object:
     from rich.console import Group
     from rich.table import Table
 
-    items: list[object] = []
+    items: list[Any] = []
 
     # Metrics row
     metrics = Table(show_header=False, show_lines=False, padding=(0, 3), box=None)
