@@ -5,6 +5,7 @@ guess.
 
 from __future__ import annotations
 
+import contextlib
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -178,37 +179,46 @@ def load_history(workspace_root: Path) -> list[HistoryRecord]:
     if not path.exists():
         return []
     records: list[HistoryRecord] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            data = json.loads(line)
-            records.append(
-                HistoryRecord(
-                    timestamp=datetime.fromisoformat(data["timestamp"]),
-                    command=data["command"],
-                    success=bool(data["success"]),
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+                records.append(
+                    HistoryRecord(
+                        timestamp=datetime.fromisoformat(data["timestamp"]),
+                        command=data["command"],
+                        success=bool(data["success"]),
+                    )
                 )
-            )
-        except (json.JSONDecodeError, KeyError, ValueError):
-            continue
+            except (json.JSONDecodeError, KeyError, ValueError):
+                continue
     return records
 
 
 def append_history(workspace_root: Path, command: str, *, success: bool) -> None:
+    """Best-effort: history is a convenience, not a source of truth, so a
+    read-only workspace or other filesystem error here must never break
+    command dispatch (which calls this after *every* command). The caller's
+    in-memory ``TuiState.command_history`` update happens independently and
+    always succeeds regardless of whether this persists to disk.
+    """
     path = history_file_path(workspace_root)
-    path.parent.mkdir(parents=True, exist_ok=True)
     record = {
         "timestamp": datetime.now(UTC).isoformat(),
         "command": command,
         "success": success,
     }
-    with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(record) + "\n")
+    with contextlib.suppress(OSError):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record) + "\n")
 
 
 def clear_history(workspace_root: Path) -> None:
     path = history_file_path(workspace_root)
-    if path.exists():
-        path.write_text("", encoding="utf-8")
+    with contextlib.suppress(OSError):
+        if path.exists():
+            path.write_text("", encoding="utf-8")

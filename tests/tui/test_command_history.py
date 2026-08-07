@@ -53,6 +53,22 @@ def test_history_clear_on_missing_file_is_a_no_op(tmp_path: Path) -> None:
     assert load_history(tmp_path) == []
 
 
+def test_append_history_never_raises_on_filesystem_error(tmp_path: Path) -> None:
+    # A file sits where the .kairos directory needs to go, so mkdir fails —
+    # history is a convenience feature and must fail closed, not take down
+    # command dispatch (which calls this after every command).
+    (tmp_path / ".kairos").write_text("not a directory")
+    append_history(tmp_path, ":search widget", success=True)  # must not raise
+    assert load_history(tmp_path) == []
+
+
+def test_clear_history_never_raises_on_filesystem_error(tmp_path: Path) -> None:
+    history_dir = tmp_path / ".kairos"
+    history_dir.mkdir()
+    (history_dir / ".tui_history").mkdir()  # a directory, not a file
+    clear_history(tmp_path)  # must not raise
+
+
 def test_hint_text_for_partial_and_full_commands() -> None:
     assert hint_text("") == ""
     assert hint_text("hello") == ""
@@ -83,6 +99,17 @@ def test_dispatch_text_appends_to_state_and_disk_history(runtime_ctx: RuntimeCon
     records = load_history(runtime_ctx.workspace.root)
     assert [r.command for r in records] == [":artifacts", ":bogus"]
     assert [r.success for r in records] == [True, False]
+
+
+def test_dispatch_text_survives_history_write_failure(runtime_ctx: RuntimeContext) -> None:
+    # A directory sits where the history file needs to go, so the append
+    # write fails — dispatch (and the in-memory history it drives the
+    # command line's ↑/↓ from) must not be affected.
+    (runtime_ctx.workspace.root / ".kairos" / ".tui_history").mkdir()
+    state = TuiState(workspace_path=runtime_ctx.workspace.root)
+    state = dispatch_text(runtime_ctx, state, ":artifacts")
+    assert state.mode == "artifacts"
+    assert state.command_history == (":artifacts",)
 
 
 def test_history_clear_command_wipes_state_and_disk(runtime_ctx: RuntimeContext) -> None:
