@@ -8,13 +8,14 @@ semantic-similarity claim.
 from __future__ import annotations
 
 from rich.markup import escape
+from textual.app import ComposeResult
+from textual.binding import Binding
+from textual.containers import VerticalScroll
 from textual.widgets import Static
 
 from kairos.cli.citation import provenance_lines
-from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
-from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorReport
 from kairos.schemas.logs import LogHit
 from kairos.schemas.note import NoteResult
@@ -50,11 +51,45 @@ def _artifact_summary_lines(a: ArtifactSummary) -> str:
     )
 
 
-class EvidencePane(Static):
+class EvidencePane(VerticalScroll):
+    """A ``VerticalScroll`` wrapping a single inner ``Static`` — not a bare
+    ``Static`` directly, because a leaf widget with no children is never
+    ``is_scrollable`` in Textual (see ``Widget.is_scrollable``), so its
+    built-in ``action_scroll_*``/``action_page_*`` bindings would silently
+    no-op regardless of content overflow. Wrapping in a real scrollable
+    container makes ↑/↓ and Page Up/Down actually move the viewport.
+    ``renderable`` is proxied through so callers (and existing tests) that
+    read the pane's text can keep treating it like a ``Static``.
+    """
+
     can_focus = True
 
+    # `action_scroll_up`/`_down`/`_home`/`_end` and `action_page_up`/`_down`
+    # are built into `Widget` already (see textual.widget) — this only wires
+    # the keys, since a plain container doesn't bind them by default the way
+    # ListView binds arrow keys for its own highlight-driven scrolling.
+    BINDINGS = [
+        Binding("up", "scroll_up", "Scroll up", show=False),
+        Binding("down", "scroll_down", "Scroll down", show=False),
+        Binding("pageup", "page_up", "Page up", show=False),
+        Binding("pagedown", "page_down", "Page down", show=False),
+        Binding("home", "scroll_home", "Top", show=False),
+        Binding("end", "scroll_end", "Bottom", show=False),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Static("", id="evidence-content")
+
+    @property
+    def renderable(self) -> object:
+        return self.query_one("#evidence-content", Static).renderable
+
     def refresh_from_state(self, state: TuiState) -> None:
-        self.update(_render(state))
+        self.query_one("#evidence-content", Static).update(_render(state))
+        # Deferred so the scroll reset happens after the layout pass that
+        # recomputes virtual_size for the new content — resetting before
+        # that pass runs against a stale size and gets overridden.
+        self.call_after_refresh(self.scroll_home, animate=False)
 
 
 def _render(state: TuiState) -> str:

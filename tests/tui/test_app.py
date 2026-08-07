@@ -18,6 +18,8 @@ import pytest
 pytest.importorskip("textual")
 pytest.importorskip("pytest_asyncio")
 
+from textual.widgets import Static
+
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
 from kairos.schemas.doctor import DoctorReport
@@ -335,6 +337,52 @@ async def test_history_records_success_and_failure(runtime_ctx: RuntimeContext) 
         statuses = [e.status for e in app.state.activity]
         assert "success" in statuses
         assert "error" in statuses
+
+
+@pytest.mark.asyncio
+async def test_command_line_up_down_cycles_history(runtime_ctx: RuntimeContext) -> None:
+    from kairos.tui.widgets.command_line import CommandLine
+
+    app = KairosApp(runtime_ctx)
+    async with app.run_test(size=WIDE) as pilot:
+        await _type_command(pilot, ":artifacts")
+        await _type_command(pilot, ":doctor")
+
+        command_line = app.query_one(CommandLine)
+        command_line.focus()
+        await pilot.pause()
+
+        await pilot.press("up")
+        await pilot.pause()
+        assert command_line.value == ":doctor"
+
+        await pilot.press("up")
+        await pilot.pause()
+        assert command_line.value == ":artifacts"
+
+        await pilot.press("down")
+        await pilot.pause()
+        assert command_line.value == ":doctor"
+
+        await pilot.press("down")
+        await pilot.pause()
+        assert command_line.value == ""
+
+
+@pytest.mark.asyncio
+async def test_command_line_shows_hint_for_partial_command(runtime_ctx: RuntimeContext) -> None:
+    from kairos.tui.widgets.command_line import CommandLine
+
+    app = KairosApp(runtime_ctx)
+    async with app.run_test(size=WIDE) as pilot:
+        command_line = app.query_one(CommandLine)
+        command_line.focus()
+        await pilot.pause()
+        await pilot.press(*":sear")
+        await pilot.pause()
+
+        hint = str(app.query_one("#command-hint", Static).renderable)
+        assert ":search" in hint
 
 
 @pytest.mark.parametrize(

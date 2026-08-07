@@ -46,6 +46,7 @@ class MainScreen(Screen[None]):
                 yield Static("\u25cf Evidence", id="evidence-title", classes="pane-title")
                 yield EvidencePane(id="evidence-pane")
         yield CommandLine()
+        yield Static("", id="command-hint")
         yield StatusLine()
 
     def on_mount(self) -> None:

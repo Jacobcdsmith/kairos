@@ -29,6 +29,8 @@ Screen {
 #explorer-pane {
     width: 30%;
     border-right: thick #21262d;
+    border-top: solid #21262d;
+    border-bottom: solid #21262d;
     background: #0d1117;
     scrollbar-color: #30363d;
     scrollbar-color-hover: #58a6ff;
@@ -90,6 +92,12 @@ ExplorerPane > ListItem.-highlight {
     scrollbar-color-hover: #58a6ff;
 }
 
+#evidence-content {
+    width: 1fr;
+    background: transparent;
+    color: #c9d1d9;
+}
+
 /* ── Responsive layout ─────────────────────────────────────────────── */
 
 #panes.mode-medium #evidence-container {
@@ -116,6 +124,17 @@ ExplorerPane > ListItem.-highlight {
 
 #command-line:focus {
     border: tall #58a6ff;
+}
+
+/* ── Command hint ──────────────────────────────────────────────────── */
+
+#command-hint {
+    dock: bottom;
+    height: 1;
+    background: #0d1117;
+    color: #8b949e;
+    padding: 0 1;
+    text-style: italic;
 }
 
 /* ── Status line ───────────────────────────────────────────────────── */
@@ -217,6 +236,20 @@ FuzzyFinderScreen {
 #fuzzy-list > ListItem.-highlight {
     background: #1c2128;
     border-left: thick #58a6ff;
+}
+
+/* ── Goto-line overlay ─────────────────────────────────────────────── */
+
+GotoLineScreen {
+    align: center middle;
+}
+
+#goto-line-container {
+    background: #161b22;
+    border: heavy #58a6ff;
+    width: 50;
+    height: 5;
+    padding: 1 2;
 }
 
 /* ── Tab bar ───────────────────────────────────────────────────────── */

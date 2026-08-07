@@ -7,6 +7,7 @@ keeps every service call read-mostly per docs/tli-implementation-plan.md.
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 from pathlib import Path
 
@@ -18,7 +19,9 @@ from textual.widgets import Input, ListView
 
 from kairos.services.context import RuntimeContext
 from kairos.tui import controller
+from kairos.tui.commands import load_history
 from kairos.tui.screens.fuzzy_finder import FuzzyFinderScreen
+from kairos.tui.screens.goto_line import GotoLineScreen
 from kairos.tui.screens.help import HelpScreen
 from kairos.tui.screens.main import MainScreen
 from kairos.tui.screens.tutorial import TutorialScreen
@@ -26,6 +29,7 @@ from kairos.tui.screens.well_picker import WellPickerScreen
 from kairos.tui.state import Selection, TuiState
 from kairos.tui.widgets.evidence_pane import EvidencePane, citation_text, excerpt_text
 from kairos.tui.widgets.explorer_pane import ExplorerPane
+from kairos.tui.widgets.status_line import StatusLine
 from kairos.tui.widgets.workspace_pane import WorkspacePane
 
 _STYLES_PATH = Path(__file__).parent / "styles" / "kairos.tcss"
@@ -41,6 +45,7 @@ class KairosApp(App[None]):
 
     BINDINGS = [
         Binding("ctrl+p", "open_fuzzy_finder", "Find"),
+        Binding("ctrl+g", "goto_line", "Go to item"),
         Binding("ctrl+r", "history_search", "History"),
         Binding("tab", "cycle_focus(false)", "Cycle pane", show=False),
         Binding("shift+tab", "cycle_focus(true)", "Cycle pane (reverse)", show=False),
@@ -58,7 +63,10 @@ class KairosApp(App[None]):
         super().__init__()
         self.runtime_ctx = runtime_ctx
         self._request_id = 0
-        self.state = TuiState(workspace_path=runtime_ctx.workspace.root)
+        persisted_history = tuple(r.command for r in load_history(runtime_ctx.workspace.root))
+        self.state = TuiState(
+            workspace_path=runtime_ctx.workspace.root, command_history=persisted_history
+        )
         self.layout_mode = "wide"
 
     def on_mount(self) -> None:
@@ -102,6 +110,8 @@ class KairosApp(App[None]):
 
     def run_command(self, text: str) -> None:
         self._request_id += 1
+        with contextlib.suppress(NoMatches):  # fired before MainScreen mounted
+            self.query_one(StatusLine).show_running(text)
         self._dispatch_worker(text, self._request_id)
 
     @work(thread=True, exclusive=True, group="dispatch")
@@ -149,6 +159,21 @@ class KairosApp(App[None]):
                 self.run_command(f":show {item.target_id}")
 
         self.push_screen(FuzzyFinderScreen(self.runtime_ctx), handle_result)
+
+    def action_goto_line(self) -> None:
+        if isinstance(self.focused, Input):
+            return
+        explorer = self.query_one(ExplorerPane)
+        count = len(explorer.children)
+        if count == 0:
+            return
+
+        def handle_result(item_number: int | None) -> None:
+            if item_number is not None:
+                explorer.index = item_number - 1
+                explorer.focus()
+
+        self.push_screen(GotoLineScreen(count), handle_result)
 
     def action_start_search(self) -> None:
         command_line = self.query_one("#command-line", Input)

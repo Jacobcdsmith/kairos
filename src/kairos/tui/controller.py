@@ -7,6 +7,7 @@ lives here — only translation between the command grammar and
 from __future__ import annotations
 
 import dataclasses
+import time
 from datetime import UTC, datetime
 
 from kairos.domain.errors import KairosError
@@ -32,7 +33,13 @@ from kairos.services.search import search as search_service
 from kairos.services.show import show as show_service
 from kairos.services.trace import trace as trace_service
 from kairos.services.wells import list_all_wells, show_well
-from kairos.tui.commands import Command, CommandParseError, parse
+from kairos.tui.commands import (
+    Command,
+    CommandParseError,
+    append_history,
+    clear_history,
+    parse,
+)
 from kairos.tui.state import ActivityEntry, Mode, Selection, TuiState
 
 _MODE_BY_COMMAND: dict[str, Mode] = {
@@ -56,28 +63,78 @@ def dispatch_text(runtime_ctx: RuntimeContext, state: TuiState, text: str) -> Tu
     raises. Parse errors and service errors both land as a "error" activity
     entry with a status-line message, per the spec's "actionable errors, no
     traceback" requirement.
+
+    Every submitted line (successful or not) is timed and folded into
+    ``command_history`` for the command line's ↑/↓ cycling, except
+    ``:history --clear`` which wipes history instead of adding to it.
     """
+    started = time.monotonic()
+    result = _dispatch_text(runtime_ctx, state, text)
+    elapsed_ms = int((time.monotonic() - started) * 1000)
+    label = _display_label(text)
+    return dataclasses.replace(result, last_command_label=label, last_command_ms=elapsed_ms)
+
+
+def _display_label(text: str) -> str:
+    body = text.strip().lstrip(":").strip()
+    return body.split()[0] if body else text.strip()
+
+
+def _dispatch_text(runtime_ctx: RuntimeContext, state: TuiState, text: str) -> TuiState:
     try:
         command = parse(text)
     except CommandParseError as exc:
-        return _record(state, mode=state.mode, command=text, status="error", summary=str(exc))
+        new_state = _record(state, mode=state.mode, command=text, status="error", summary=str(exc))
+        return _track_history(runtime_ctx, new_state, text, success=False)
+
+    if command.name == "history" and "--clear" in command.args:
+        clear_history(runtime_ctx.workspace.root)
+        cleared = dataclasses.replace(state, command_history=())
+        return _record(
+            cleared,
+            mode="history",
+            command=text,
+            status="success",
+            summary="command history cleared",
+        )
 
     if command.name == "quit":
-        return _record(state, mode=state.mode, command=text, status="success", summary="quit")
+        new_state = _record(state, mode=state.mode, command=text, status="success", summary="quit")
+        return _track_history(runtime_ctx, new_state, text, success=True)
 
     if command.name == "refresh":
         last = next((e for e in reversed(state.activity) if e.status == "success"), None)
         if last is None:
-            return _record(
+            new_state = _record(
                 state, mode=state.mode, command=text, status="error", summary="Nothing to refresh."
             )
-        return dispatch_text(runtime_ctx, state, last.command)
+            return _track_history(runtime_ctx, new_state, text, success=False)
+        try:
+            new_state = _dispatch(runtime_ctx, state, parse(last.command))
+            return _track_history(runtime_ctx, new_state, text, success=True)
+        except (CommandParseError, KairosError) as exc:
+            new_state = _record(
+                state, mode=state.mode, command=text, status="error", summary=str(exc)
+            )
+            return _track_history(runtime_ctx, new_state, text, success=False)
 
     try:
-        return _dispatch(runtime_ctx, state, command)
+        new_state = _dispatch(runtime_ctx, state, command)
+        return _track_history(runtime_ctx, new_state, text, success=True)
     except KairosError as exc:
         mode = _MODE_BY_COMMAND.get(command.name, state.mode)
-        return _record(state, mode=mode, command=text, status="error", summary=str(exc))
+        new_state = _record(state, mode=mode, command=text, status="error", summary=str(exc))
+        return _track_history(runtime_ctx, new_state, text, success=False)
+
+
+def _track_history(
+    runtime_ctx: RuntimeContext, state: TuiState, text: str, *, success: bool
+) -> TuiState:
+    stripped = text.strip()
+    if not stripped:
+        return state
+    append_history(runtime_ctx.workspace.root, stripped, success=success)
+    return dataclasses.replace(state, command_history=(*state.command_history, stripped))
 
 
 def _dispatch(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
@@ -132,6 +189,7 @@ def _home(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
         total_relations = session.scalar(select(func.count(RelationRow.id))) or 0
         total_spans = session.scalar(select(func.count(SourceSpanRow.id))) or 0
         total_wells = session.scalar(select(func.count(CoherenceWellRow.id))) or 0
+        total_size = session.scalar(select(func.sum(ArtifactRow.size_bytes))) or 0
 
         # Breakdown by kind
         kind_rows = session.execute(
@@ -159,8 +217,14 @@ def _home(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
         workspace_name=runtime_ctx.workspace.root.name,
         recent_activity=events[:5],
     )
-    return _record(
+    updated_state = dataclasses.replace(
         state,
+        artifact_count=total_artifacts,
+        workspace_size_bytes=total_size,
+        well_count=total_wells,
+    )
+    return _record(
+        updated_state,
         mode="home",
         command=command.raw,
         status="success",
@@ -298,8 +362,9 @@ def _well(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
     sub = command.args[0] if command.args else "list"
     if sub == "list":
         wells = list_all_wells(runtime_ctx)
+        updated_state = dataclasses.replace(state, well_count=len(wells))
         return _record(
-            state,
+            updated_state,
             mode="well",
             command=command.raw,
             status="success",
@@ -392,13 +457,19 @@ def _ingest(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> T
     if diag_count:
         summary_parts.append(f"{diag_count} diagnostic(s)")
 
-    return _record(
+    artifacts = list_artifacts_service(runtime_ctx)
+    updated_state = dataclasses.replace(
         state,
+        artifact_count=len(artifacts),
+        workspace_size_bytes=sum(a.size_bytes for a in artifacts),
+    )
+    return _record(
+        updated_state,
         mode="artifacts",
         command=command.raw,
         status="success",
         summary=", ".join(summary_parts),
-        last_result=list_artifacts_service(runtime_ctx),
+        last_result=artifacts,
     )
 
 

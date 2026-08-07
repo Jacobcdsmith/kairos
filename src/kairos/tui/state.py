@@ -109,6 +109,19 @@ class TuiState:
     status_message: str | None = None
     last_result: ModeResult = None
     focus: FocusTarget = "command_line"
+    # Every line submitted at the command line, oldest first — backs the
+    # command line's ↑/↓ cycling. Persisted separately to
+    # .kairos/.tui_history (see kairos.tui.commands) so it survives restarts.
+    command_history: tuple[str, ...] = ()
+    # Set by the controller after every dispatch, for the status/header line.
+    last_command_label: str | None = None
+    last_command_ms: int | None = None
+    # Sticky workspace stats for the header — refreshed by the handlers that
+    # can actually change them (:home, :ingest, :well) rather than on every
+    # dispatch, so a plain :search doesn't pay for a recount.
+    artifact_count: int = 0
+    workspace_size_bytes: int = 0
+    well_count: int = 0
 
 
 def as_list_of[T](value: object, item_type: type[T]) -> list[T] | None:

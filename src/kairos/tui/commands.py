@@ -5,7 +5,10 @@ guess.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 
 _ALIASES: dict[str, str] = {
     "s": "search",
@@ -98,3 +101,114 @@ def _closest(name: str) -> str | None:
         if known.startswith(name) or name.startswith(known):
             return known
     return None
+
+
+# ── Command-line hints & autocomplete ─────────────────────────────────────
+# Names exported for the command line widget's `Suggester` (ghost-text
+# completion) — kept as the same frozenset the parser validates against so
+# the two never drift.
+KNOWN_COMMAND_NAMES = _KNOWN_COMMANDS
+
+_COMMAND_HINTS: dict[str, str] = {
+    "home": "dashboard of workspace stats and recent activity",
+    "artifacts": "list ingested artifacts, optionally filtered by kind",
+    "search": "full-text search over ingested content",
+    "show": "show one artifact's structured detail and spans",
+    "trace": "trace an entity or term through its typed relations",
+    "well": "list/use/clear/show coherence wells (scoped views)",
+    "config": "show a Kconfig symbol's definition and provenance",
+    "logs": "search parsed log lines",
+    "doctor": "run workspace health checks (read-only)",
+    "history": "this session's command history (--clear to wipe it)",
+    "help": "open the help overlay",
+    "note": "add or list notes on an artifact/span",
+    "ingest": "ingest a file or directory into the workspace",
+    "tutorial": "open the guided tutorial overlay",
+    "refresh": "re-run the last successful command",
+    "quit": "quit the TUI",
+}
+
+
+def hint_text(partial: str) -> str:
+    """One-line hint for whatever command name is currently being typed at
+    the command line, shown just below it. Returns ``""`` when there's
+    nothing useful to show — not yet typing a command, or the input is
+    still just ``:`` — since an unrecognized command is already covered by
+    the parser's own error message once submitted.
+    """
+    stripped = partial.strip()
+    if not stripped.startswith(":"):
+        return ""
+    body = stripped[1:]
+    typed_name = body.split()[0] if body else ""
+    if not typed_name:
+        return ""
+    name = _ALIASES.get(typed_name, typed_name)
+    if name in _KNOWN_COMMANDS:
+        return f":{name} — {_COMMAND_HINTS.get(name, '')}"
+    matches = sorted(n for n in _KNOWN_COMMANDS if n.startswith(name))
+    if not matches:
+        return ""
+    if len(matches) == 1:
+        return f":{matches[0]} — {_COMMAND_HINTS.get(matches[0], '')}"
+    return "possible: " + ", ".join(f":{m}" for m in matches)
+
+
+# ── Command history persistence ───────────────────────────────────────────
+# Append-only JSONL at .kairos/.tui_history, one record per submitted
+# command line. Corrupt lines are skipped rather than sinking the whole
+# file — this is a convenience log, not a source of truth.
+
+HISTORY_FILENAME = ".tui_history"
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryRecord:
+    timestamp: datetime
+    command: str
+    success: bool
+
+
+def history_file_path(workspace_root: Path) -> Path:
+    return workspace_root / ".kairos" / HISTORY_FILENAME
+
+
+def load_history(workspace_root: Path) -> list[HistoryRecord]:
+    path = history_file_path(workspace_root)
+    if not path.exists():
+        return []
+    records: list[HistoryRecord] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            data = json.loads(line)
+            records.append(
+                HistoryRecord(
+                    timestamp=datetime.fromisoformat(data["timestamp"]),
+                    command=data["command"],
+                    success=bool(data["success"]),
+                )
+            )
+        except (json.JSONDecodeError, KeyError, ValueError):
+            continue
+    return records
+
+
+def append_history(workspace_root: Path, command: str, *, success: bool) -> None:
+    path = history_file_path(workspace_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    record = {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "command": command,
+        "success": success,
+    }
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+
+def clear_history(workspace_root: Path) -> None:
+    path = history_file_path(workspace_root)
+    if path.exists():
+        path.write_text("", encoding="utf-8")
