@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import dataclasses
 
-from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
+from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorReport
 from kairos.schemas.logs import LogHit
 from kairos.schemas.note import NoteResult
@@ -172,8 +172,10 @@ def test_note_add_and_list_are_the_only_mutations(runtime_ctx: RuntimeContext) -
     assert notes[0].body == "looks good"
 
 
-def test_home_lists_recent_activity(runtime_ctx: RuntimeContext) -> None:
+def test_home_shows_dashboard_with_recent_activity(runtime_ctx: RuntimeContext) -> None:
     state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":artifacts")
     state = dispatch_text(runtime_ctx, state, ":home")
     assert state.mode == "home"
-    assert as_list_of(state.last_result, ActivityEvent) is not None
+    assert isinstance(state.last_result, DashboardResult)
+    assert state.last_result.total_artifacts == 7
+    assert state.last_result.recent_activity  # :artifacts just ran, so activity isn't empty
