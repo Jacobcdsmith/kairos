@@ -414,7 +414,22 @@ async def test_tui_makes_no_network_access(
     def _blocked(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("KAIROS TUI attempted network access.")
 
-    monkeypatch.setattr(socket, "socket", _blocked)
+    real_socket = socket.socket
+
+    def _guarded_socket(
+        family: int = socket.AF_INET,
+        type: int = socket.SOCK_STREAM,
+        *args: object,
+        **kwargs: object,
+    ) -> socket.socket:
+        # AF_UNIX/AF_UNIX-family sockets are local IPC — asyncio's own event
+        # loop uses one internally for self-pipe wakeups, unrelated to any
+        # actual network access. Only block real network address families.
+        if family in (socket.AF_INET, socket.AF_INET6):
+            _blocked()
+        return real_socket(family, type, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(socket, "socket", _guarded_socket)
     monkeypatch.setattr(socket, "create_connection", _blocked)
     monkeypatch.setattr(socket, "getaddrinfo", _blocked)
 
