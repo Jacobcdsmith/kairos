@@ -176,10 +176,10 @@ def _render_result(state: TuiState) -> object:
 
 
 def _render_dashboard(d: DashboardResult) -> object:
-    from rich.console import Group
+    from rich.console import Group, RenderableType
     from rich.table import Table
 
-    items: list[object] = []
+    items: list[RenderableType] = []
 
     # Metrics row
     metrics = Table(show_header=False, show_lines=False, padding=(0, 3), box=None)

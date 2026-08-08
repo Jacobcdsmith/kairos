@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import contextlib
 import urllib.parse
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -63,25 +64,25 @@ from kairos.services.wells import (
 # helpers
 # ---------------------------------------------------------------------------
 
-_CTX: RuntimeContext | None = None
+_ctx_singleton: RuntimeContext | None = None
 
 
 def _ctx() -> RuntimeContext:
-    global _CTX
-    if _CTX is None:
+    global _ctx_singleton
+    if _ctx_singleton is None:
         try:
-            _CTX = RuntimeContext.open(Path.cwd())
+            _ctx_singleton = RuntimeContext.open(Path.cwd())
         except Exception as exc:
             raise KairosError(f"No KAIROS workspace found: {exc}") from exc
-    return _CTX
+    return _ctx_singleton
 
 
 def _reset_ctx() -> None:
-    global _CTX
-    _CTX = None
+    global _ctx_singleton
+    _ctx_singleton = None
 
 
-def _try(fn, **default: Any) -> dict:
+def _try(fn: Callable[[], dict[str, Any]], **default: Any) -> dict[str, Any]:
     """Wrap a KAIROS service call into a status dict."""
     try:
         return {"status": "ok", **fn()}
@@ -125,7 +126,7 @@ def _read_bytes_around_locator(
     abs_path: Path,
     locator: Locator,
     context_lines: int = 3,
-) -> dict | None:
+) -> dict[str, Any] | None:
     """Read source bytes around a locator and return a snippet dict."""
     if isinstance(locator, (LineRangeLocator, RepoFileLinesLocator)):
         start, end = locator.start_line, locator.end_line
@@ -140,7 +141,7 @@ def _read_bytes_around_locator(
     ctx_start = max(0, start - context_lines - 1)
     ctx_end = min(len(lines), end + context_lines)
 
-    snippet_lines = []
+    snippet_lines: list[str] = []
     for i in range(ctx_start, ctx_end):
         line_no = i + 1
         marker = " >" if start - 1 <= i < end else "  "
@@ -175,7 +176,7 @@ def _resolve_artifact_path(
 # ---------------------------------------------------------------------------
 
 
-def kairos_init(path: str | None = None, name: str | None = None) -> dict:
+def kairos_init(path: str | None = None, name: str | None = None) -> dict[str, Any]:
     """Initialise a KAIROS workspace (like ``kairos init``).
 
     Args:
@@ -188,7 +189,7 @@ def kairos_init(path: str | None = None, name: str | None = None) -> dict:
     from kairos.infrastructure.database.migrate import upgrade_to_head
     from kairos.infrastructure.filesystem.workspace import init_workspace
 
-    def _run():
+    def _run() -> dict[str, Any]:
         root = Path(path).resolve() if path else Path.cwd().resolve()
         workspace = init_workspace(root, name=name)
         upgrade_to_head(workspace.db_path)
@@ -197,13 +198,13 @@ def kairos_init(path: str | None = None, name: str | None = None) -> dict:
         return {
             "workspace_path": str(root),
             "db_path": str(workspace.db_path),
-            "name": workspace.name,
+            "name": name or root.name,
         }
 
     return _try(_run)
 
 
-def kairos_ingest(path: str = ".", recursive: bool = True) -> dict:
+def kairos_ingest(path: str = ".", recursive: bool = True) -> dict[str, Any]:
     """Ingest files into the workspace.
 
     Args:
@@ -216,9 +217,9 @@ def kairos_ingest(path: str = ".", recursive: bool = True) -> dict:
     """
     ctx = _ctx()
 
-    def _run():
+    def _run() -> dict[str, Any]:
         report = _ingest(ctx, Path(path), recursive=recursive)
-        outcomes = []
+        outcomes: list[dict[str, Any]] = []
         for o in report.outcomes:
             artifacts = _list_artifacts(ctx)
             source_link = None
@@ -257,7 +258,7 @@ def kairos_ingest(path: str = ".", recursive: bool = True) -> dict:
     return _try(_run)
 
 
-def kairos_search(query: str, limit: int = 20, well: str | None = None) -> dict:
+def kairos_search(query: str, limit: int = 20, well: str | None = None) -> dict[str, Any]:
     """Full-text search with provenance envelopes.
 
     Args:
@@ -271,9 +272,9 @@ def kairos_search(query: str, limit: int = 20, well: str | None = None) -> dict:
     """
     ctx = _ctx()
 
-    def _run():
+    def _run() -> dict[str, Any]:
         result = _search(ctx, query, well=well)
-        hits = []
+        hits: list[dict[str, Any]] = []
         ws_root = ctx.workspace.root
         for h in result.hits[:limit]:
             source_link = _source_link_for_envelope(h.provenance, ws_root)
@@ -299,7 +300,7 @@ def kairos_search(query: str, limit: int = 20, well: str | None = None) -> dict:
     return _try(_run)
 
 
-def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict:
+def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict[str, Any]:
     """Bidirectional entity trace with provenance on every edge.
 
     Args:
@@ -312,10 +313,10 @@ def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict:
     """
     ctx = _ctx()
 
-    def _run():
+    def _run() -> dict[str, Any]:
         result: TraceResult = _trace(ctx, term, depth=depth, well=well)
         ws_root = ctx.workspace.root
-        nodes_out = []
+        nodes_out: list[dict[str, Any]] = []
         for n in result.nodes:
             source_link = None
             if n.provenance is not None:
@@ -337,7 +338,7 @@ def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict:
                     ),
                 }
             )
-        edges_out = []
+        edges_out: list[dict[str, Any]] = []
         for e in result.edges:
             edges_out.append(
                 {
@@ -363,7 +364,7 @@ def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict:
     return _try(_run)
 
 
-def kairos_show(artifact_id: str) -> dict:
+def kairos_show(artifact_id: str) -> dict[str, Any]:
     """Show full artifact detail with all spans and provenance.
 
     Args:
@@ -374,10 +375,10 @@ def kairos_show(artifact_id: str) -> dict:
     """
     ctx = _ctx()
 
-    def _run():
+    def _run() -> dict[str, Any]:
         detail = _show(ctx, artifact_id)
         ws_root = ctx.workspace.root
-        spans = []
+        spans: list[dict[str, Any]] = []
         for s in detail.spans:
             source_link = _source_link_for_envelope(s.provenance, ws_root)
             spans.append(
@@ -410,7 +411,7 @@ def kairos_show(artifact_id: str) -> dict:
 def kairos_source_content(
     artifact_id: str,
     context_lines: int = 3,
-) -> dict:
+) -> dict[str, Any]:
     """Read actual source bytes around each locatable span.
 
     Args:
@@ -422,7 +423,7 @@ def kairos_source_content(
     """
     ctx = _ctx()
 
-    def _run():
+    def _run() -> dict[str, Any]:
         resolved = _resolve_artifact_path(artifact_id)
         if resolved is None:
             raise KairosError(f"Artifact not found: {artifact_id}")
@@ -431,7 +432,7 @@ def kairos_source_content(
         with session_scope(ctx.session_factory) as session:
             span_rows = list_spans_for_artifact(session, artifact_id)
 
-        payload = {
+        payload: dict[str, Any] = {
             "artifact_id": artifact_id,
             "source_path": str(rel_path),
             "file_path": str(abs_path),
@@ -460,7 +461,7 @@ def kairos_source_content(
     return _try(_run)
 
 
-def kairos_source_link(artifact_id: str, locator_str: str | None = None) -> dict:
+def kairos_source_link(artifact_id: str, locator_str: str | None = None) -> dict[str, Any]:
     """Resolve an artifact + optional locator to clickable source links.
 
     Args:
@@ -510,7 +511,7 @@ def kairos_source_link(artifact_id: str, locator_str: str | None = None) -> dict
     return _try(_run)
 
 
-def kairos_artifacts(kind: str | None = None) -> dict:
+def kairos_artifacts(kind: str | None = None) -> dict[str, Any]:
     """List artifacts in the workspace.
 
     Args:
@@ -542,7 +543,7 @@ def kairos_artifacts(kind: str | None = None) -> dict:
     return _try(_run)
 
 
-def kairos_well_create(name: str, purpose: str = "") -> dict:
+def kairos_well_create(name: str, purpose: str = "") -> dict[str, Any]:
     """Create a coherence well to scope a working set.
 
     Args:
@@ -566,7 +567,7 @@ def kairos_well_create(name: str, purpose: str = "") -> dict:
     return _try(_run)
 
 
-def kairos_well_add(well_name: str, target_id: str, note: str | None = None) -> dict:
+def kairos_well_add(well_name: str, target_id: str, note: str | None = None) -> dict[str, Any]:
     """Add an artifact or span to a coherence well.
 
     Args:
@@ -592,7 +593,7 @@ def kairos_well_add(well_name: str, target_id: str, note: str | None = None) -> 
     return _try(_run)
 
 
-def kairos_well_show(well_name: str) -> dict:
+def kairos_well_show(well_name: str) -> dict[str, Any]:
     """Show a coherence well's contents.
 
     Args:
@@ -624,7 +625,7 @@ def kairos_well_show(well_name: str) -> dict:
     return _try(_run)
 
 
-def kairos_well_list() -> dict:
+def kairos_well_list() -> dict[str, Any]:
     """List all coherence wells.
 
     Returns:
@@ -650,7 +651,7 @@ def kairos_well_list() -> dict:
     return _try(_run)
 
 
-def kairos_well_remove(well_name: str, member_id: str) -> dict:
+def kairos_well_remove(well_name: str, member_id: str) -> dict[str, Any]:
     """Remove a member from a coherence well.
 
     Args:
@@ -669,7 +670,7 @@ def kairos_well_remove(well_name: str, member_id: str) -> dict:
     return _try(_run)
 
 
-def kairos_status() -> dict:
+def kairos_status() -> dict[str, Any]:
     """Check KAIROS workspace status.
 
     Returns:
@@ -677,7 +678,7 @@ def kairos_status() -> dict:
     """
     ctx = _ctx()
 
-    def _run():
+    def _run() -> dict[str, Any]:
         import json as _json
 
         from sqlalchemy import text as _text
@@ -685,7 +686,7 @@ def kairos_status() -> dict:
         from kairos.infrastructure.database.engine import fts5_is_available
 
         # read config for name/schema_version
-        _ws_cfg = {}
+        _ws_cfg: dict[str, Any] = {}
         with contextlib.suppress(Exception):
             _ws_cfg = _json.loads(ctx.workspace.config_path.read_text(encoding="utf-8"))
 
