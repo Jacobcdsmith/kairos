@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from kairos.domain.enums import ParseStatus, SpanKind
@@ -43,3 +44,25 @@ def test_malformed_json_is_not_silently_dropped(tmp_path: Path) -> None:
     assert result.diagnostics
     assert len(result.spans) == 1
     assert '"a": 1' in result.spans[0].text_content
+
+
+def test_json_deeply_nested_does_not_raise(tmp_path: Path) -> None:
+    """A JSON document with >1000 levels of nesting must parse without
+    RecursionError — the iterative traversal replaces the former recursive
+    visit() closure that hit Python's default stack limit at ~950 levels."""
+    depth = 1100
+    # Build {"a": {"a": {"a": ... }}} depth levels deep
+    doc: object = "leaf"
+    for _ in range(depth):
+        doc = {"a": doc}
+    path = tmp_path / "deep.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+
+    parser = JsonParser()
+    result = parser.parse(path, "artifact-deep")
+
+    assert result.parse_status == ParseStatus.OK
+    # 1100 nested dict containers + 1 scalar leaf = depth + 1 spans
+    # 1100 json_contains relations (one per container-to-child edge)
+    assert len(result.spans) == depth + 1
+    assert len(result.relations) == depth

@@ -64,7 +64,15 @@ class JsonParser:
 
         ordinal_counter = [0]
 
-        def visit(value: JsonValue, json_path: str, parent_span_id: str | None) -> str:
+        # Iterative BFS/DFS traversal — avoids Python's recursion limit on
+        # deeply nested JSON documents (e.g. 1 000+ levels).  Each stack
+        # frame is (value, json_path, parent_span_id); the span_id for the
+        # current node is allocated before its children so containment
+        # relations can reference it immediately.
+        stack: list[tuple[JsonValue, str, str | None]] = [(document, "$", None)]
+        while stack:
+            value, json_path, parent_span_id = stack.pop()
+
             span_id = new_id()
             ordinal = ordinal_counter[0]
             ordinal_counter[0] += 1
@@ -89,45 +97,29 @@ class JsonParser:
                 )
             )
 
+            if parent_span_id is not None:
+                result.relations.append(
+                    Relation(
+                        id=new_id(),
+                        subject_id=parent_span_id,
+                        subject_kind="span",
+                        predicate=RelationPredicate.JSON_CONTAINS.value,
+                        object_id=span_id,
+                        object_kind="span",
+                        evidence_span_id=parent_span_id,
+                        origin=Origin.DERIVED,
+                        derivation_rule="json.tree_containment.v1",
+                        confidence=1.0,
+                    )
+                )
+
             if isinstance(value, dict):
-                for key, child in value.items():
-                    child_path = f"{json_path}.{key}"
-                    child_span_id = visit(child, child_path, span_id)
-                    result.relations.append(
-                        Relation(
-                            id=new_id(),
-                            subject_id=span_id,
-                            subject_kind="span",
-                            predicate=RelationPredicate.JSON_CONTAINS.value,
-                            object_id=child_span_id,
-                            object_kind="span",
-                            evidence_span_id=span_id,
-                            origin=Origin.DERIVED,
-                            derivation_rule="json.tree_containment.v1",
-                            confidence=1.0,
-                        )
-                    )
+                # Push children in reverse order so left-to-right ordinals come
+                # out naturally when the stack unwinds.
+                for key in reversed(list(value.keys())):
+                    stack.append((value[key], f"{json_path}.{key}", span_id))
             elif isinstance(value, list):
-                for i, child in enumerate(value):
-                    child_path = f"{json_path}[{i}]"
-                    child_span_id = visit(child, child_path, span_id)
-                    result.relations.append(
-                        Relation(
-                            id=new_id(),
-                            subject_id=span_id,
-                            subject_kind="span",
-                            predicate=RelationPredicate.JSON_CONTAINS.value,
-                            object_id=child_span_id,
-                            object_kind="span",
-                            evidence_span_id=span_id,
-                            origin=Origin.DERIVED,
-                            derivation_rule="json.tree_containment.v1",
-                            confidence=1.0,
-                        )
-                    )
-
-            return span_id
-
-        visit(document, "$", None)
+                for i in reversed(range(len(value))):
+                    stack.append((value[i], f"{json_path}[{i}]", span_id))
         result.parse_status = ParseStatus.OK
         return result
