@@ -190,7 +190,7 @@ kairos note <span-id> "Confirmed: power-save off by default since v2.4.1 (PR #88
 
 ---
 
-
+## How it's built
 
 - **Storage**: SQLite as the canonical store (9 tables), plus an FTS5 virtual table with sync triggers — no separate search service, no vector database.
 - **Migrations**: single Alembic migration, run programmatically by `kairos init`.

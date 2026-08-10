@@ -54,7 +54,12 @@ def append_event(
 
     @event.listens_for(session, "after_commit", once=True)
     def _write_jsonl(_session: Session) -> None:  # pyright: ignore[reportUnusedFunction]
-        with events_path.open("a", encoding="utf-8") as f:
-            f.write(line + "\n")
+        try:
+            with events_path.open("a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except OSError:
+            # The DB commit already succeeded — the event is durable in SQLite.
+            # A best-effort JSONL mirror failure should not crash the caller.
+            pass
 
     return event_id
