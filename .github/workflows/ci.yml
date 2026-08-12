@@ -25,14 +25,20 @@ jobs:
       - name: Ruff lint
         run: ruff check src tests
 
-      - name: Pyright
-        run: pyright
-
       - name: Pytest
         run: pytest -q
 
       - name: Install TUI extras
         run: pip install -e ".[tui,tui-test]"
+
+      # Runs after the TUI extras are installed (unlike the base Pytest step
+      # above) so pyright can actually resolve `textual`/`textual.*` imports
+      # in src/kairos/tui and tests/tui — pyrightconfig's `include` covers
+      # both unconditionally, so without this ordering every TUI-touching
+      # file fails with hundreds of reportUnknown* cascade errors regardless
+      # of whether the code itself is otherwise correct.
+      - name: Pyright
+        run: pyright
 
       - name: Pytest (TUI)
         run: pytest -q tests/tui

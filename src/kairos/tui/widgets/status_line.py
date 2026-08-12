@@ -18,14 +18,22 @@ class StatusLine(Static):
     def __init__(self) -> None:
         super().__init__(_LEGEND, id="status-line")
 
+    def show_running(self, command_text: str) -> None:
+        """Transient yellow "still running" indicator, shown the instant a
+        command is dispatched \u2014 before its worker thread has returned \u2014
+        and overwritten by the next ``refresh_from_state`` once it does.
+        """
+        message = escape(command_text.strip())
+        self.update(f"[yellow]\u25cc running: {message}...[/yellow]   {_SEP}{_LEGEND}")
+
     def refresh_from_state(self, state: TuiState) -> None:
         if state.status_message:
             message = escape(state.status_message)
             if state.status == "error":
                 prefix = "[red]\u2717[/red] "
-                self.update(f"{prefix}{message}   {_SEP}{_LEGEND}")
+                self.update(f"{prefix}[red]{message}[/red]   {_SEP}{_LEGEND}")
             else:
-                prefix = "[dim]\u2713[/dim] "
-                self.update(f"{prefix}[dim]{message}[/dim]   {_SEP}{_LEGEND}")
+                prefix = "[green]\u2713[/green] "
+                self.update(f"{prefix}[green]{message}[/green]   {_SEP}{_LEGEND}")
         else:
             self.update(_LEGEND)

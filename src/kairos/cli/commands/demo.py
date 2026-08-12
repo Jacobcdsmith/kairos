@@ -19,12 +19,12 @@ from rich.table import Table
 
 from kairos.cli.errors import cli_command
 from kairos.services.context import RuntimeContext
+from kairos.services.doctor import run_doctor
 from kairos.services.ingest import ingest
 from kairos.services.search import search
-from kairos.services.trace import trace
 from kairos.services.show import show
-from kairos.services.wells import create_well, add_member, show_well
-from kairos.services.doctor import run_doctor
+from kairos.services.trace import trace
+from kairos.services.wells import add_member, create_well, show_well
 
 demo_console = Console()
 
@@ -75,7 +75,8 @@ def run() -> None:
     demo_console.print(
         Panel(
             "[dim]A temporary workspace will be created and destroyed.\n"
-            "Every result shown is real — sourced from the test fixtures shipped with KAIROS.[/dim]",
+            "Every result shown is real — sourced from the test fixtures shipped "
+            "with KAIROS.[/dim]",
             width=72,
         )
     )
@@ -83,8 +84,8 @@ def run() -> None:
     try:
         # -- init -----------------------------------------------------------
         _heading("1.  init — create a workspace")
-        from kairos.infrastructure.filesystem.workspace import init_workspace
         from kairos.infrastructure.database.migrate import upgrade_to_head
+        from kairos.infrastructure.filesystem.workspace import init_workspace
 
         workspace = init_workspace(workspace_path, name="demo-workspace")
         upgrade_to_head(workspace.db_path)
@@ -115,7 +116,7 @@ def run() -> None:
         ingest(ctx, python_dir, recursive=True)
         _ok(f"Python repo: {python_dir.name}/ (AST nodes → imports → classes)")
 
-        _info(f"All files parsed by structure, not chunked by byte count.")
+        _info("All files parsed by structure, not chunked by byte count.")
 
         # -- artifacts -------------------------------------------------------
         _heading("3.  artifacts — what's in the workspace")
@@ -124,7 +125,11 @@ def run() -> None:
         all_artifacts = list_artifacts(ctx)
         table = Table("kind", "source_path", "parser", "status")
         for a in all_artifacts:
-            status = "[green]ok[/green]" if a.parse_status == "ok" else f"[yellow]{a.parse_status}[/yellow]"
+            status = (
+                "[green]ok[/green]"
+                if a.parse_status == "ok"
+                else f"[yellow]{a.parse_status}[/yellow]"
+            )
             table.add_row(a.kind, escape(a.source_path), a.parser_name, status)
         demo_console.print(table)
         _info(f"{len(all_artifacts)} artifacts ingested.")
@@ -142,7 +147,8 @@ def run() -> None:
                     escape(h.snippet[:80]),
                 )
             demo_console.print(st)
-            _ok(f"{search_result.hits[0].provenance.locator_str} — exact locator, extracted by parser")
+            locator_str = search_result.hits[0].provenance.locator_str
+            _ok(f"{locator_str} — exact locator, extracted by parser")
         else:
             _info("(no hits for 'widget' — fixtures may vary)")
 
@@ -198,7 +204,8 @@ def run() -> None:
                 "All parsing is structure-aware (AST, headings, JSON paths, Kconfig symbols,\n"
                 "log sessions). All results carry provenance: artifact id, exact locator,\n"
                 "parser name, parser version, provenance layer.\n\n"
-                "[dim]Temporary workspace has been removed. Nothing was written to your sources.[/dim]",
+                "[dim]Temporary workspace has been removed. "
+                "Nothing was written to your sources.[/dim]",
                 width=72,
             )
         )

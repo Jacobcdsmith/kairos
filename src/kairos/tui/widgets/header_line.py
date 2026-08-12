@@ -5,9 +5,18 @@ from textual.widgets import Static
 
 from kairos.tui.state import TuiState
 
-_GLYPH = "\u2b22"
-_WELL_GLYPH = "\u25c8"
-_OFFLINE_GLYPH = "\u25cf"
+_GLYPH = "⬢"
+_WELL_GLYPH = "◈"
+_OFFLINE_GLYPH = "●"
+
+
+def format_size(num_bytes: int) -> str:
+    size = float(num_bytes)
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{size:.0f}{unit}" if unit == "B" else f"{size:.1f}{unit}"
+        size /= 1024
+    return f"{size:.1f}GB"
 
 
 class HeaderLine(Static):
@@ -17,7 +26,16 @@ class HeaderLine(Static):
     def refresh_from_state(self, state: TuiState) -> None:
         workspace_name = escape(state.workspace_path.name)
         well = escape(state.active_well) if state.active_well else "none"
+        stats = (
+            f"{state.artifact_count} artifact(s) · "
+            f"{format_size(state.workspace_size_bytes)} · "
+            f"{state.well_count} well(s)"
+        )
+        runtime = ""
+        if state.last_command_label is not None and state.last_command_ms is not None:
+            runtime = f"  │  {state.last_command_label} took {state.last_command_ms}ms"
         self.update(
-            f" {_GLYPH} KAIROS  \u2502  ws: {workspace_name}  "
-            f"\u2502  {_WELL_GLYPH} well: {well}  \u2502  {_OFFLINE_GLYPH} LOCAL"
+            f" {_GLYPH} KAIROS  │  ws: {workspace_name}  "
+            f"│  {_WELL_GLYPH} well: {well}  │  {stats}"
+            f"{runtime}  │  {_OFFLINE_GLYPH} LOCAL"
         )

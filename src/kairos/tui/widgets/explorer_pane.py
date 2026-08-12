@@ -37,6 +37,26 @@ _LAYER_GLYPH = {
 
 _LAYER_TAG = {"raw": "RAW", "extracted": "EXTRACTED", "derived": "DERIVED", "user": "USER"}
 
+_TITLE_BY_MODE = {
+    "home": "Home",
+    "artifacts": "Artifacts",
+    "search": "Search",
+    "show": "Detail",
+    "trace": "Trace",
+    "well": "Wells",
+    "config": "Config",
+    "logs": "Logs",
+    "doctor": "Doctor",
+    "history": "History",
+    "help": "Help",
+    "notes": "Notes",
+}
+
+# Every Nth row gets a printed line number in its gutter, so a long list
+# gives you a sense of position (and a number to hand to Ctrl+G) without
+# numbering — and cluttering — every single line.
+_GUTTER_EVERY = 5
+
 
 @dataclass(frozen=True, slots=True)
 class _Row:
@@ -46,11 +66,35 @@ class _Row:
     target_id: str | None
 
 
+def highlighted(text: str, term: str | None) -> str:
+    """Escape ``text`` for Rich markup, wrapping case-insensitive matches of
+    ``term`` in a reverse-video span. Escaping happens per-chunk so the
+    highlight markup itself is never escaped away.
+    """
+    if not term:
+        return escape(text)
+    lower_text, lower_term = text.lower(), term.lower()
+    if lower_term not in lower_text:
+        return escape(text)
+    chunks: list[str] = []
+    i = 0
+    while i < len(text):
+        idx = lower_text.find(lower_term, i)
+        if idx == -1:
+            chunks.append(escape(text[i:]))
+            break
+        chunks.append(escape(text[i:idx]))
+        chunks.append(f"[reverse]{escape(text[idx : idx + len(term)])}[/reverse]")
+        i = idx + len(term)
+    return "".join(chunks)
+
+
 class ExplorerItem(ListItem):
-    def __init__(self, row: _Row) -> None:
-        text = escape(row.label)
+    def __init__(self, row: _Row, index: int, query_term: str | None = None) -> None:
+        gutter = f"{index + 1:>4} " if (index + 1) % _GUTTER_EVERY == 0 else "     "
+        text = f"{gutter}{highlighted(row.label, query_term)}"
         if row.sublabel:
-            text += f"\n[dim]{escape(row.sublabel)}[/dim]"
+            text += f"\n     [dim]{escape(row.sublabel)}[/dim]"
         super().__init__(Static(text))
         self.kind: SelectionKind | None = row.kind
         self.target_id: str | None = row.target_id
@@ -60,16 +104,47 @@ class ExplorerPane(ListView):
     def refresh_from_state(self, state: TuiState) -> None:
         self.clear()
         rows = _rows_for(state)
-        for row in rows:
-            self.append(ExplorerItem(row))
+        query_term = _query_term(state)
+        for index, row in enumerate(rows):
+            self.append(ExplorerItem(row, index, query_term))
         if rows:
             self.index = 0
+        self.border_title = f"{_TITLE_BY_MODE.get(state.mode, state.mode.title())} ({len(rows)})"
+        self.call_after_refresh(self._update_scroll_indicators)
 
     def selected_reference(self) -> tuple[SelectionKind, str] | None:
         item = self.highlighted_child
         if isinstance(item, ExplorerItem) and item.kind is not None and item.target_id is not None:
             return item.kind, item.target_id
         return None
+
+    def on_list_viewhighlighted(self, event: ListView.Highlighted) -> None:
+        self.call_after_refresh(self._update_scroll_indicators)
+
+    def _update_scroll_indicators(self) -> None:
+        max_scroll = self.max_scroll_y
+        if max_scroll <= 0:
+            self.border_subtitle = ""
+            return
+        can_scroll_up = self.scroll_y > 0.5
+        can_scroll_down = self.scroll_y < max_scroll - 0.5
+        if can_scroll_up and can_scroll_down:
+            self.border_subtitle = "▲▼ more"
+        elif can_scroll_up:
+            self.border_subtitle = "▲ top"
+        elif can_scroll_down:
+            self.border_subtitle = "▼ more below"
+        else:
+            self.border_subtitle = ""
+
+
+def _query_term(state: TuiState) -> str | None:
+    result = state.last_result
+    if isinstance(result, SearchResult):
+        return result.query
+    if isinstance(result, TraceResult):
+        return result.query
+    return None
 
 
 def _rows_for(state: TuiState) -> list[_Row]:
@@ -209,9 +284,12 @@ def _dashboard_rows(d: DashboardResult) -> list[_Row]:
         rows.append(_Row(f"  ▸  {bk.kind}", sub, "artifact", f"dashboard:kind:{bk.kind}"))
     # Recent activity
     for ev in d.recent_activity:
-        rows.append(_Row(
-            f"  ▸  {ev.event_type}",
-            ev.occurred_at.isoformat(timespec="minutes"),
-            None, None,
-        ))
+        rows.append(
+            _Row(
+                f"  ▸  {ev.event_type}",
+                ev.occurred_at.isoformat(timespec="minutes"),
+                None,
+                None,
+            )
+        )
     return rows or [_Row("○  Empty workspace — try :ingest .", "", None, None)]

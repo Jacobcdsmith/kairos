@@ -95,14 +95,10 @@ def _render_result(state: TuiState) -> object:
         text = Text()
         text.append(f"\u25c6 trace: {result.query}\n", style="bold cyan")
         for edge in result.edges:
-            text.append(
-                f"  {edge.subject_id[:8]} ", style="dim"
-            )
+            text.append(f"  {edge.subject_id[:8]} ", style="dim")
             text.append(f"\u2500\u2500{edge.predicate}\u2500\u2500> ", style="yellow")
             text.append(f"{edge.object_id[:8]}\n", style="dim")
-            text.append(
-                f"    ({edge.layer}, rule={edge.derivation_rule or 'n/a'})\n", style="dim"
-            )
+            text.append(f"    ({edge.layer}, rule={edge.derivation_rule or 'n/a'})\n", style="dim")
         if not result.edges:
             text.append("  (no explicit relations found)\n", style="dim italic")
         return text
@@ -180,10 +176,10 @@ def _render_result(state: TuiState) -> object:
 
 
 def _render_dashboard(d: DashboardResult) -> object:
-    from rich.console import Group
+    from rich.console import Group, RenderableType
     from rich.table import Table
 
-    items: list[object] = []
+    items: list[RenderableType] = []
 
     # Metrics row
     metrics = Table(show_header=False, show_lines=False, padding=(0, 3), box=None)
@@ -203,9 +199,7 @@ def _render_dashboard(d: DashboardResult) -> object:
 
     # Breakdown by kind
     if d.artifacts_by_kind:
-        breakdown = Table(
-            title="Artifact breakdown", show_lines=False, padding=(0, 2), box=None
-        )
+        breakdown = Table(title="Artifact breakdown", show_lines=False, padding=(0, 2), box=None)
         breakdown.add_column("kind", style="cyan")
         breakdown.add_column("count", justify="right")
         breakdown.add_column("ok", justify="right")
@@ -225,9 +219,7 @@ def _render_dashboard(d: DashboardResult) -> object:
 
     # Recent activity
     if d.recent_activity:
-        events = Table(
-            title="Recent activity", show_lines=False, padding=(0, 2), box=None
-        )
+        events = Table(title="Recent activity", show_lines=False, padding=(0, 2), box=None)
         events.add_column("time", style="dim")
         events.add_column("event", style="cyan")
         for ev in d.recent_activity:

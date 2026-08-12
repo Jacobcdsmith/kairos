@@ -18,6 +18,8 @@ import pytest
 pytest.importorskip("textual")
 pytest.importorskip("pytest_asyncio")
 
+from textual.widgets import Static
+
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
 from kairos.schemas.config import ConfigSymbolResult
 from kairos.schemas.doctor import DoctorReport
@@ -337,6 +339,52 @@ async def test_history_records_success_and_failure(runtime_ctx: RuntimeContext) 
         assert "error" in statuses
 
 
+@pytest.mark.asyncio
+async def test_command_line_up_down_cycles_history(runtime_ctx: RuntimeContext) -> None:
+    from kairos.tui.widgets.command_line import CommandLine
+
+    app = KairosApp(runtime_ctx)
+    async with app.run_test(size=WIDE) as pilot:
+        await _type_command(pilot, ":artifacts")
+        await _type_command(pilot, ":doctor")
+
+        command_line = app.query_one(CommandLine)
+        command_line.focus()
+        await pilot.pause()
+
+        await pilot.press("up")
+        await pilot.pause()
+        assert command_line.value == ":doctor"
+
+        await pilot.press("up")
+        await pilot.pause()
+        assert command_line.value == ":artifacts"
+
+        await pilot.press("down")
+        await pilot.pause()
+        assert command_line.value == ":doctor"
+
+        await pilot.press("down")
+        await pilot.pause()
+        assert command_line.value == ""
+
+
+@pytest.mark.asyncio
+async def test_command_line_shows_hint_for_partial_command(runtime_ctx: RuntimeContext) -> None:
+    from kairos.tui.widgets.command_line import CommandLine
+
+    app = KairosApp(runtime_ctx)
+    async with app.run_test(size=WIDE) as pilot:
+        command_line = app.query_one(CommandLine)
+        command_line.focus()
+        await pilot.pause()
+        await pilot.press(*":sear")
+        await pilot.pause()
+
+        hint = str(app.query_one("#command-hint", Static).renderable)
+        assert ":search" in hint
+
+
 @pytest.mark.parametrize(
     "width,expect_explorer,expect_evidence",
     [(140, True, True), (90, True, False), (60, False, False)],
@@ -366,7 +414,22 @@ async def test_tui_makes_no_network_access(
     def _blocked(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("KAIROS TUI attempted network access.")
 
-    monkeypatch.setattr(socket, "socket", _blocked)
+    real_socket = socket.socket
+
+    def _guarded_socket(
+        family: int = socket.AF_INET,
+        type: int = socket.SOCK_STREAM,
+        *args: object,
+        **kwargs: object,
+    ) -> socket.socket:
+        # AF_UNIX/AF_UNIX-family sockets are local IPC — asyncio's own event
+        # loop uses one internally for self-pipe wakeups, unrelated to any
+        # actual network access. Only block real network address families.
+        if family in (socket.AF_INET, socket.AF_INET6):
+            _blocked()
+        return real_socket(family, type, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(socket, "socket", _guarded_socket)
     monkeypatch.setattr(socket, "create_connection", _blocked)
     monkeypatch.setattr(socket, "getaddrinfo", _blocked)
 
