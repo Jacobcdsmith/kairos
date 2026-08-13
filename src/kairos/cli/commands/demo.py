@@ -124,7 +124,11 @@ def run() -> None:
         all_artifacts = list_artifacts(ctx)
         table = Table("kind", "source_path", "parser", "status")
         for a in all_artifacts:
-            status = "[green]ok[/green]" if a.parse_status == "ok" else f"[yellow]{a.parse_status}[/yellow]"
+            status = (
+                "[green]ok[/green]"
+                if a.parse_status == "ok"
+                else f"[yellow]{a.parse_status}[/yellow]"
+            )
             table.add_row(a.kind, escape(a.source_path), a.parser_name, status)
         demo_console.print(table)
         _info(f"{len(all_artifacts)} artifacts ingested.")
@@ -142,7 +146,9 @@ def run() -> None:
                     escape(h.snippet[:80]),
                 )
             demo_console.print(st)
-            _ok(f"{search_result.hits[0].provenance.locator_str} — exact locator, extracted by parser")
+            _ok(
+                f"{search_result.hits[0].provenance.locator_str} — exact locator, extracted by parser"
+            )
         else:
             _info("(no hits for 'widget' — fixtures may vary)")
 
