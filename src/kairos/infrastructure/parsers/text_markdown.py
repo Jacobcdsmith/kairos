@@ -143,7 +143,9 @@ def _scan(path: Path, artifact_id: str, *, is_markdown: bool) -> ParseResult:
                         message=f"Unclosed fenced code block starting at line {start + 1}",
                         severity="warning",
                         locator_json=locator_to_json(
-                            LineRangeLocator(start_line=start + 1, end_line=end_line + 1)
+                            LineRangeLocator(
+                                start_line=start + 1, end_line=end_line + 1
+                            )
                         ),
                     )
                 )
@@ -174,7 +176,10 @@ def _scan(path: Path, artifact_id: str, *, is_markdown: bool) -> ParseResult:
         while (
             i < n
             and lines[i].strip() != ""
-            and not (is_markdown and (_HEADING_RE.match(lines[i]) or _FENCE_RE.match(lines[i])))
+            and not (
+                is_markdown
+                and (_HEADING_RE.match(lines[i]) or _FENCE_RE.match(lines[i]))
+            )
         ):
             para_lines.append(lines[i])
             i += 1

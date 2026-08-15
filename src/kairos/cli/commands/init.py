@@ -17,9 +17,12 @@ from kairos.services.workspace_init import init as init_service
 @cli_command
 def run(
     workspace: Annotated[
-        Path, typer.Argument(help="Directory to create/initialize as a KAIROS workspace.")
+        Path,
+        typer.Argument(help="Directory to create/initialize as a KAIROS workspace."),
     ],
-    name: Annotated[str | None, typer.Option(help="Human-readable workspace name.")] = None,
+    name: Annotated[
+        str | None, typer.Option(help="Human-readable workspace name.")
+    ] = None,
     interactive: Annotated[
         bool,
         typer.Option(
@@ -37,7 +40,9 @@ def run(
 
 def _run_simple(workspace: Path, name: str | None) -> None:
     ctx = init_service(workspace, name=name)
-    console.print(f"[green]Initialized[/green] KAIROS workspace at {ctx.workspace.root}")
+    console.print(
+        f"[green]Initialized[/green] KAIROS workspace at {ctx.workspace.root}"
+    )
     console.print(f"  database: {ctx.workspace.db_path}")
     console.print(f"  events:   {ctx.workspace.events_path}")
     console.print()
@@ -50,7 +55,9 @@ def _run_simple(workspace: Path, name: str | None) -> None:
 def _run_wizard(workspace: Path, name: str | None) -> None:
     console.print()
     console.print("[bold cyan]Welcome to KAIROS[/bold cyan]")
-    console.print("[dim]A local-first, source-grounded workspace for your technical corpus.[/dim]")
+    console.print(
+        "[dim]A local-first, source-grounded workspace for your technical corpus.[/dim]"
+    )
     console.print()
 
     console.print("[bold]Step 1: Workspace location[/bold]")
@@ -82,14 +89,18 @@ def _run_wizard(workspace: Path, name: str | None) -> None:
             break
         path = Path(path_str).expanduser().resolve()
         if not path.exists():
-            console.print(f"  [yellow]Warning: {path} does not exist, skipping[/yellow]")
+            console.print(
+                f"  [yellow]Warning: {path} does not exist, skipping[/yellow]"
+            )
         else:
             ingest_paths.append(path)
             console.print(f"  [green]Added:[/green] {path}")
 
     console.print()
     console.print("[bold]Step 4: Coherence well (optional)[/bold]")
-    console.print("  [dim]A coherence well is a curated working set of related artifacts.[/dim]")
+    console.print(
+        "  [dim]A coherence well is a curated working set of related artifacts.[/dim]"
+    )
     create_initial_well = Confirm.ask("  Create an initial well?", default=False)
 
     well_name: str | None = None
@@ -110,7 +121,9 @@ def _run_wizard(workspace: Path, name: str | None) -> None:
             recursive = path.is_dir()
             report = ingest_service(ctx, path, recursive=recursive)
             new_count = sum(1 for o in report.outcomes if not o.already_ingested)
-            console.print(f"  [green]Ingested[/green] {path} ({new_count} new artifact(s))")
+            console.print(
+                f"  [green]Ingested[/green] {path} ({new_count} new artifact(s))"
+            )
 
     if well_name and well_purpose:
         console.print()
@@ -122,9 +135,15 @@ def _run_wizard(workspace: Path, name: str | None) -> None:
     console.print("[bold green]Setup complete![/bold green]")
     console.print()
     console.print("[bold]Next steps:[/bold]")
-    console.print("  [cyan]kairos tui[/cyan]                     Launch the interactive TUI")
+    console.print(
+        "  [cyan]kairos tui[/cyan]                     Launch the interactive TUI"
+    )
     console.print("  [cyan]kairos search <query>[/cyan]          Search your corpus")
-    console.print("  [cyan]kairos artifacts[/cyan]               List all ingested artifacts")
-    console.print("  [cyan]kairos trace <term>[/cyan]            Trace relations across sources")
+    console.print(
+        "  [cyan]kairos artifacts[/cyan]               List all ingested artifacts"
+    )
+    console.print(
+        "  [cyan]kairos trace <term>[/cyan]            Trace relations across sources"
+    )
     console.print()
     console.print("[dim]Run 'kairos --help' for the full command reference.[/dim]")

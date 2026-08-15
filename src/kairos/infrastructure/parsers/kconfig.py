@@ -69,7 +69,9 @@ class KconfigParser:
         if path.suffix.lower() != ".json":
             return False
         try:
-            document: JsonValue = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+            document: JsonValue = json.loads(
+                path.read_text(encoding="utf-8", errors="replace")
+            )
         except (json.JSONDecodeError, OSError):
             return False
         return is_kconfig_menu_document(document)
@@ -83,12 +85,16 @@ class KconfigParser:
         # symbol canonical_name -> entity_id, so depends_on can reference
         # symbols regardless of tree order (forward references are common).
         symbol_entity_ids: dict[str, str] = {}
-        pending_depends: list[tuple[str, str]] = []  # (subject_entity_id, depends_on_text)
+        pending_depends: list[tuple[str, str]] = (
+            []
+        )  # (subject_entity_id, depends_on_text)
 
         # Iterative traversal — avoids Python's recursion limit on deeply
         # nested Kconfig trees (e.g. 1 000+ levels).  Each stack frame is
         # (node, menu_path, parent_span_id).
-        stack: list[tuple[dict[str, JsonValue], str, str | None]] = [(document, "", None)]
+        stack: list[tuple[dict[str, JsonValue], str, str | None]] = [
+            (document, "", None)
+        ]
         while stack:
             node, menu_path, parent_span_id = stack.pop()
 
@@ -115,7 +121,9 @@ class KconfigParser:
                     id=span_id,
                     artifact_id=artifact_id,
                     span_kind=(
-                        SpanKind.KCONFIG_SYMBOL if node_type == "symbol" else SpanKind.KCONFIG_MENU
+                        SpanKind.KCONFIG_SYMBOL
+                        if node_type == "symbol"
+                        else SpanKind.KCONFIG_MENU
                     ),
                     locator_json=locator_to_json(locator),
                     parent_span_id=parent_span_id,
@@ -220,5 +228,7 @@ class KconfigParser:
                     )
                 )
 
-        result.parse_status = ParseStatus.PARTIAL if result.diagnostics else ParseStatus.OK
+        result.parse_status = (
+            ParseStatus.PARTIAL if result.diagnostics else ParseStatus.OK
+        )
         return result

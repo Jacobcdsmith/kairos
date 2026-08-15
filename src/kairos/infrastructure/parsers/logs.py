@@ -127,7 +127,11 @@ class LogParser:
                     parent_span_id=None,
                     ordinal=i,
                     text_content=message,
-                    metadata={"level": level, "component": component, "timestamp": timestamp},
+                    metadata={
+                        "level": level,
+                        "component": component,
+                        "timestamp": timestamp,
+                    },
                 )
             )
 

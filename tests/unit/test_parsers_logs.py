@@ -38,12 +38,16 @@ def test_session_boundary_creates_entity_and_relations() -> None:
     parser = LogParser()
     result = parser.parse(FIXTURES / "sample.log", "artifact-log")
 
-    sessions = [e for e in result.entities if e.entity_type == EntityType.LOG_SESSION.value]
+    sessions = [
+        e for e in result.entities if e.entity_type == EntityType.LOG_SESSION.value
+    ]
     assert len(sessions) == 1
     assert sessions[0].canonical_name == "BOOT"
 
     membership = [r for r in result.relations if r.predicate == "log_in_session"]
-    assert len(membership) == 4  # every line after the boundary (not the boundary itself)
+    assert (
+        len(membership) == 4
+    )  # every line after the boundary (not the boundary itself)
     assert all(r.subject_id == sessions[0].id for r in membership)
 
 

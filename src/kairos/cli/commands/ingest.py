@@ -37,7 +37,9 @@ def run(
     table.add_column("note")
 
     for outcome in report.outcomes:
-        note = "already ingested (same content hash)" if outcome.already_ingested else ""
+        note = (
+            "already ingested (same content hash)" if outcome.already_ingested else ""
+        )
         if outcome.diagnostics:
             note = f"{len(outcome.diagnostics)} diagnostic(s)"
         table.add_row(

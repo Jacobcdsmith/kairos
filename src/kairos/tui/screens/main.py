@@ -43,7 +43,9 @@ class MainScreen(Screen[None]):
             yield ExplorerPane(id="explorer-pane")
             yield WorkspacePane()
             with Vertical(id="evidence-container"):
-                yield Static("\u25cf Evidence", id="evidence-title", classes="pane-title")
+                yield Static(
+                    "\u25cf Evidence", id="evidence-title", classes="pane-title"
+                )
                 yield EvidencePane(id="evidence-pane")
         yield CommandLine()
         yield StatusLine()

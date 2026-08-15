@@ -16,7 +16,9 @@ from typer.testing import CliRunner
 from tests.integration.conftest import run_in
 
 
-def test_lexically_similar_headings_are_not_reconciled(runner: CliRunner, workspace: Path) -> None:
+def test_lexically_similar_headings_are_not_reconciled(
+    runner: CliRunner, workspace: Path
+) -> None:
     doc_a = workspace / "a.md"
     doc_b = workspace / "b.md"
     doc_a.write_text("# Widget\n\nSingular widget document.\n", encoding="utf-8")
@@ -33,7 +35,10 @@ def test_lexically_similar_headings_are_not_reconciled(runner: CliRunner, worksp
                 "SELECT canonical_name FROM entities WHERE entity_type = 'heading'"
             ).fetchall()
         }
-        assert names == {"Widget", "Widgets"}, "distinct headings must not reconcile to one entity"
+        assert names == {
+            "Widget",
+            "Widgets",
+        }, "distinct headings must not reconcile to one entity"
 
         entity_ids = {
             row[0]: row[1]
@@ -49,7 +54,9 @@ def test_lexically_similar_headings_are_not_reconciled(runner: CliRunner, worksp
             "WHERE (subject_id = ? AND object_id = ?) OR (subject_id = ? AND object_id = ?)",
             (widget_id, widgets_id, widgets_id, widget_id),
         ).fetchone()[0]
-        assert linking_relations == 0, "no relation may ever connect two distinct entities"
+        assert (
+            linking_relations == 0
+        ), "no relation may ever connect two distinct entities"
     finally:
         conn.close()
 

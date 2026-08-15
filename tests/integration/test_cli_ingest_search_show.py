@@ -11,7 +11,9 @@ from typer.testing import CliRunner
 from tests.integration.conftest import FIXTURES, run_in
 
 
-def test_ingest_artifacts_show_search_markdown(runner: CliRunner, workspace: Path) -> None:
+def test_ingest_artifacts_show_search_markdown(
+    runner: CliRunner, workspace: Path
+) -> None:
     result = run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
     assert result.exit_code == 0, result.output
     assert "markdown" in result.output
@@ -36,7 +38,9 @@ def test_ingest_artifacts_show_search_markdown(runner: CliRunner, workspace: Pat
     assert "extracted" in result.output
 
 
-def test_ingest_is_idempotent_on_same_content(runner: CliRunner, workspace: Path) -> None:
+def test_ingest_is_idempotent_on_same_content(
+    runner: CliRunner, workspace: Path
+) -> None:
     path = str(FIXTURES / "text" / "sample.md")
     first = run_in(runner, workspace, ["ingest", path])
     assert first.exit_code == 0
@@ -64,18 +68,24 @@ def test_ingest_all_six_parser_kinds(runner: CliRunner, workspace: Path) -> None
         assert kind in result.output
 
 
-def test_show_unknown_artifact_id_fails_cleanly(runner: CliRunner, workspace: Path) -> None:
+def test_show_unknown_artifact_id_fails_cleanly(
+    runner: CliRunner, workspace: Path
+) -> None:
     result = run_in(runner, workspace, ["show", "does-not-exist"])
     assert result.exit_code == 1
     assert "Error" in result.output
 
 
-def test_ingest_nonexistent_path_fails_cleanly(runner: CliRunner, workspace: Path) -> None:
+def test_ingest_nonexistent_path_fails_cleanly(
+    runner: CliRunner, workspace: Path
+) -> None:
     result = run_in(runner, workspace, ["ingest", "/no/such/path"])
     assert result.exit_code == 1
 
 
-def test_search_malformed_fts_query_fails_cleanly(runner: CliRunner, workspace: Path) -> None:
+def test_search_malformed_fts_query_fails_cleanly(
+    runner: CliRunner, workspace: Path
+) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
     result = run_in(runner, workspace, ["search", "widget()"])
     assert result.exit_code == 1
@@ -84,4 +94,6 @@ def test_search_malformed_fts_query_fails_cleanly(runner: CliRunner, workspace: 
 
 def test_commands_require_a_workspace(runner: CliRunner, tmp_path: Path) -> None:
     result = run_in(runner, tmp_path, ["artifacts"])
-    assert result.exit_code == 2  # workspace/configuration failure, not a user-input error
+    assert (
+        result.exit_code == 2
+    )  # workspace/configuration failure, not a user-input error

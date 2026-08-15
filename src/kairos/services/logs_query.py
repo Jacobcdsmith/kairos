@@ -31,7 +31,9 @@ def query_logs(
     with session_scope(ctx.session_factory) as session:
         anchors = search_spans(session, query, kind_filter=_LOG_LINE_KIND, limit=limit)
 
-        selected_span_ids: dict[str, None] = {}  # ordered set, preserving first-seen order
+        selected_span_ids: dict[str, None] = (
+            {}
+        )  # ordered set, preserving first-seen order
         for anchor in anchors:
             span_row = get_span(session, anchor.span_id)
             if span_row is None:
@@ -42,7 +44,9 @@ def query_logs(
 
             siblings = list_spans_for_artifact(session, anchor.artifact_id)
             log_lines = [s for s in siblings if s.span_kind == _LOG_LINE_KIND]
-            index = next((i for i, s in enumerate(log_lines) if s.id == span_row.id), None)
+            index = next(
+                (i for i, s in enumerate(log_lines) if s.id == span_row.id), None
+            )
             if index is None:
                 selected_span_ids[span_row.id] = None
                 continue
@@ -60,7 +64,9 @@ def query_logs(
                 continue
             envelope = build_envelope(
                 artifact_id=artifact_row.id,
-                source_path=ctx.workspace.relative_path(Path(artifact_row.original_path)),
+                source_path=ctx.workspace.relative_path(
+                    Path(artifact_row.original_path)
+                ),
                 artifact_kind=artifact_row.kind,
                 locator=locator_from_json(span_row.locator_json),
                 parser_name=artifact_row.parser_name,

@@ -7,7 +7,10 @@ from datetime import UTC, datetime
 from kairos.domain.ids import new_id
 from kairos.infrastructure.database.engine import session_scope
 from kairos.infrastructure.database.orm import NoteRow
-from kairos.infrastructure.database.repositories import insert_note, list_notes_for_target
+from kairos.infrastructure.database.repositories import (
+    insert_note,
+    list_notes_for_target,
+)
 from kairos.schemas.note import NoteResult
 from kairos.services.context import RuntimeContext
 from kairos.services.events import append_event
@@ -30,7 +33,10 @@ def add_note(ctx: RuntimeContext, target_id: str, text: str) -> NoteResult:
         )
         insert_note(session, row)
         append_event(
-            session, ctx.workspace, "note.add", {"target_id": target_id, "note_id": note_id}
+            session,
+            ctx.workspace,
+            "note.add",
+            {"target_id": target_id, "note_id": note_id},
         )
         return NoteResult(
             id=row.id,

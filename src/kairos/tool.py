@@ -221,7 +221,11 @@ def kairos_ingest(path: str = ".", recursive: bool = True) -> dict:
             source_link = None
             for a in artifacts:
                 if a.id == o.artifact.id:
-                    abs_path = Path.cwd() / a.source_path if not Path(a.source_path).is_absolute() else Path(a.source_path)
+                    abs_path = (
+                        Path.cwd() / a.source_path
+                        if not Path(a.source_path).is_absolute()
+                        else Path(a.source_path)
+                    )
                     source_link = abs_path.resolve().as_uri()
                     break
             outcomes.append(
@@ -293,9 +297,7 @@ def kairos_search(query: str, limit: int = 20, well: str | None = None) -> dict:
     return _try(_run)
 
 
-def kairos_trace(
-    term: str, depth: int = 2, well: str | None = None
-) -> dict:
+def kairos_trace(term: str, depth: int = 2, well: str | None = None) -> dict:
     """Bidirectional entity trace with provenance on every edge.
 
     Args:
@@ -489,7 +491,11 @@ def kairos_source_link(artifact_id: str, locator_str: str | None = None) -> dict
             locator = locator_from_json(spans[0].locator_json)
 
         file_uri = abs_path.as_uri()
-        source_link = _make_link(file_uri, locator.start_line, locator.end_line) if isinstance(locator, (LineRangeLocator, RepoFileLinesLocator)) else file_uri
+        source_link = (
+            _make_link(file_uri, locator.start_line, locator.end_line)
+            if isinstance(locator, (LineRangeLocator, RepoFileLinesLocator))
+            else file_uri
+        )
 
         return {
             "artifact_id": artifact_id,
@@ -683,21 +689,23 @@ def kairos_status() -> dict:
             pass
 
         with session_scope(ctx.session_factory) as session:
-            artifacts = session.execute(
-                _text("SELECT COUNT(*) FROM artifacts")
-            ).scalar() or 0
-            entities = session.execute(
-                _text("SELECT COUNT(*) FROM entities")
-            ).scalar() or 0
-            relations = session.execute(
-                _text("SELECT COUNT(*) FROM relations")
-            ).scalar() or 0
-            spans = session.execute(
-                _text("SELECT COUNT(*) FROM source_spans")
-            ).scalar() or 0
-            wells = session.execute(
-                _text("SELECT COUNT(*) FROM coherence_wells")
-            ).scalar() or 0
+            artifacts = (
+                session.execute(_text("SELECT COUNT(*) FROM artifacts")).scalar() or 0
+            )
+            entities = (
+                session.execute(_text("SELECT COUNT(*) FROM entities")).scalar() or 0
+            )
+            relations = (
+                session.execute(_text("SELECT COUNT(*) FROM relations")).scalar() or 0
+            )
+            spans = (
+                session.execute(_text("SELECT COUNT(*) FROM source_spans")).scalar()
+                or 0
+            )
+            wells = (
+                session.execute(_text("SELECT COUNT(*) FROM coherence_wells")).scalar()
+                or 0
+            )
 
         return {
             "workspace": {

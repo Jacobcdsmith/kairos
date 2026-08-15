@@ -16,7 +16,9 @@ from kairos.schemas.well import WellSummary
 from kairos.services.context import RuntimeContext
 from kairos.services.wells import list_all_wells
 
-WellPickerResult = tuple[str, str | None]  # ("use", name) | ("clear", None) | ("cancel", None)
+WellPickerResult = tuple[
+    str, str | None
+]  # ("use", name) | ("clear", None) | ("cancel", None)
 
 
 class _WellItem(ListItem):

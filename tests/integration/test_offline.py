@@ -35,7 +35,9 @@ def block_network(monkeypatch: pytest.MonkeyPatch) -> None:
 def _first_artifact_id(workspace: Path) -> str:
     conn = sqlite3.connect(workspace / ".kairos" / "kairos.db")
     try:
-        row = conn.execute("SELECT id FROM artifacts WHERE kind = 'markdown' LIMIT 1").fetchone()
+        row = conn.execute(
+            "SELECT id FROM artifacts WHERE kind = 'markdown' LIMIT 1"
+        ).fetchone()
         return cast(str, row[0])
     finally:
         conn.close()
@@ -61,21 +63,34 @@ def test_full_command_surface_works_with_network_disabled(
     artifact_id = _first_artifact_id(workspace)
     assert run_in(runner, workspace, ["show", artifact_id]).exit_code == 0
     assert run_in(runner, workspace, ["search", "widget"]).exit_code == 0
-    assert run_in(runner, workspace, ["trace", "Widgets", "--depth", "2"]).exit_code == 0
-    assert run_in(runner, workspace, ["config", "CONFIG_WIFI_POWER_SAVE"]).exit_code == 0
+    assert (
+        run_in(runner, workspace, ["trace", "Widgets", "--depth", "2"]).exit_code == 0
+    )
+    assert (
+        run_in(runner, workspace, ["config", "CONFIG_WIFI_POWER_SAVE"]).exit_code == 0
+    )
     assert run_in(runner, workspace, ["logs", "widget"]).exit_code == 0
 
-    note_result = run_in(runner, workspace, ["note", "add", artifact_id, "offline test note"])
+    note_result = run_in(
+        runner, workspace, ["note", "add", artifact_id, "offline test note"]
+    )
     assert note_result.exit_code == 0
     assert run_in(runner, workspace, ["note", "list", artifact_id]).exit_code == 0
 
     assert (
         run_in(
-            runner, workspace, ["well", "create", "offline-well", "--purpose", "offline test"]
+            runner,
+            workspace,
+            ["well", "create", "offline-well", "--purpose", "offline test"],
         ).exit_code
         == 0
     )
-    assert run_in(runner, workspace, ["well", "add", "offline-well", artifact_id]).exit_code == 0
+    assert (
+        run_in(
+            runner, workspace, ["well", "add", "offline-well", artifact_id]
+        ).exit_code
+        == 0
+    )
     assert run_in(runner, workspace, ["well", "show", "offline-well"]).exit_code == 0
     assert run_in(runner, workspace, ["well", "list"]).exit_code == 0
 

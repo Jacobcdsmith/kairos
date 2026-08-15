@@ -51,7 +51,9 @@ def get_config_symbol(ctx: RuntimeContext, symbol: str) -> ConfigSymbolResult:
 
         artifact_row = get_artifact(session, span_row.artifact_id)
         if artifact_row is None:
-            raise ConfigSymbolNotFoundError(f"Symbol {symbol!r} has no grounding artifact")
+            raise ConfigSymbolNotFoundError(
+                f"Symbol {symbol!r} has no grounding artifact"
+            )
 
         children: list[str] = []
         for rel in list_relations_from(session, span_row.id):

@@ -89,7 +89,9 @@ class KairosApp(App[None]):
     def _apply_layout_mode(self) -> None:
         width = self.size.width
         self.layout_mode = (
-            "wide" if width >= _WIDE_MIN else "medium" if width >= _MEDIUM_MIN else "narrow"
+            "wide"
+            if width >= _WIDE_MIN
+            else "medium" if width >= _MEDIUM_MIN else "narrow"
         )
         try:
             self.query_one(MainScreen).apply_layout_mode(self.layout_mode)
@@ -210,7 +212,9 @@ class KairosApp(App[None]):
             workspace_pane.write(f"(no {label} available for the current selection)")
             return
         self.copy_to_clipboard(text)
-        workspace_pane.write(f"Copied {label} (also shown here, in case clipboard is unavailable):")
+        workspace_pane.write(
+            f"Copied {label} (also shown here, in case clipboard is unavailable):"
+        )
         workspace_pane.write(text)
 
     def action_cycle_focus(self, reverse: bool) -> None:

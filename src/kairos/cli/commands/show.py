@@ -16,10 +16,14 @@ from kairos.services.show import show as show_service
 
 @cli_command
 def run(
-    artifact_id: Annotated[str, typer.Argument(help="Artifact id, from `kairos artifacts`.")],
+    artifact_id: Annotated[
+        str, typer.Argument(help="Artifact id, from `kairos artifacts`.")
+    ],
     locator: Annotated[
         str | None,
-        typer.Option("--locator", help="Restrict to one locator, e.g. lines:1-1 or page:3."),
+        typer.Option(
+            "--locator", help="Restrict to one locator, e.g. lines:1-1 or page:3."
+        ),
     ] = None,
 ) -> None:
     ctx = RuntimeContext.open(Path.cwd())
@@ -43,4 +47,6 @@ def run(
     for span in detail.spans:
         body = escape(span.text_content) if span.text_content else "[dim](empty)[/dim]"
         title = f"[{span.span_kind}] {span.provenance.locator_str}  layer={span.provenance.layer}"
-        console.print(Panel(body, title=escape(title), subtitle=f"span_id={span.span_id}"))
+        console.print(
+            Panel(body, title=escape(title), subtitle=f"span_id={span.span_id}")
+        )

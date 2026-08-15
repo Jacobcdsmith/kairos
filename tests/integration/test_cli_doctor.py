@@ -9,7 +9,9 @@ from typer.testing import CliRunner
 from tests.integration.conftest import run_in
 
 
-def test_doctor_reports_healthy_on_a_fresh_workspace(runner: CliRunner, workspace: Path) -> None:
+def test_doctor_reports_healthy_on_a_fresh_workspace(
+    runner: CliRunner, workspace: Path
+) -> None:
     result = run_in(runner, workspace, ["doctor"])
     assert result.exit_code == 0, result.output
     assert "fts5_available" in result.output
@@ -19,4 +21,6 @@ def test_doctor_reports_healthy_on_a_fresh_workspace(runner: CliRunner, workspac
 
 def test_doctor_requires_a_workspace(runner: CliRunner, tmp_path: Path) -> None:
     result = run_in(runner, tmp_path, ["doctor"])
-    assert result.exit_code == 2  # workspace/configuration failure, not a user-input error
+    assert (
+        result.exit_code == 2
+    )  # workspace/configuration failure, not a user-input error

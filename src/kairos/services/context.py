@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from kairos.infrastructure.database.engine import make_engine, make_session_factory
 from kairos.infrastructure.database.migrate import upgrade_to_head
 from kairos.infrastructure.filesystem.content_store import ContentStore
-from kairos.infrastructure.filesystem.workspace import Workspace, find_workspace, init_workspace
+from kairos.infrastructure.filesystem.workspace import (
+    Workspace,
+    find_workspace,
+    init_workspace,
+)
 from kairos.infrastructure.parsers.registry import ParserRegistry
 
 

@@ -71,7 +71,9 @@ _MODEL_BY_DOMAIN_KIND: dict[type, type[BaseModel]] = {
 
 def locator_model_from_domain(locator: domain_locators.Locator) -> BaseModel:
     model_cls = _MODEL_BY_DOMAIN_KIND[type(locator)]
-    data = {f.name: getattr(locator, f.name) for f in fields(locator) if f.name != "kind"}
+    data = {
+        f.name: getattr(locator, f.name) for f in fields(locator) if f.name != "kind"
+    }
     return model_cls(**data)
 
 

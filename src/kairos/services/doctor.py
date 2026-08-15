@@ -55,7 +55,9 @@ def run_doctor(ctx: RuntimeContext) -> DoctorReport:
 
     try:
         with session_scope(ctx.session_factory) as session:
-            version = session.execute(text("SELECT version_num FROM alembic_version")).scalar()
+            version = session.execute(
+                text("SELECT version_num FROM alembic_version")
+            ).scalar()
         checks.append(
             DoctorCheck(
                 name="schema_migration",
@@ -63,9 +65,15 @@ def run_doctor(ctx: RuntimeContext) -> DoctorReport:
                 detail=f"alembic_version={version!r}",
             )
         )
-    except Exception as exc:  # any DB failure here is itself the diagnostic being reported
+    except (
+        Exception
+    ) as exc:  # any DB failure here is itself the diagnostic being reported
         checks.append(
-            DoctorCheck(name="schema_migration", ok=False, detail=f"Could not read schema: {exc}")
+            DoctorCheck(
+                name="schema_migration",
+                ok=False,
+                detail=f"Could not read schema: {exc}",
+            )
         )
 
     content_dir_ok = ctx.workspace.content_dir.is_dir()
@@ -79,7 +87,9 @@ def run_doctor(ctx: RuntimeContext) -> DoctorReport:
 
     events_ok = ctx.workspace.events_path.is_file()
     checks.append(
-        DoctorCheck(name="events_log", ok=events_ok, detail=str(ctx.workspace.events_path))
+        DoctorCheck(
+            name="events_log", ok=events_ok, detail=str(ctx.workspace.events_path)
+        )
     )
 
     checks.append(_content_integrity_check(ctx))
@@ -122,7 +132,9 @@ def _content_integrity_check(ctx: RuntimeContext) -> DoctorCheck:
         detail_parts.append(f"hash mismatch for artifact(s): {', '.join(mismatched)}")
     if missing:
         detail_parts.append(f"missing blob for artifact(s): {', '.join(missing)}")
-    return DoctorCheck(name="content_integrity", ok=False, detail="; ".join(detail_parts))
+    return DoctorCheck(
+        name="content_integrity", ok=False, detail="; ".join(detail_parts)
+    )
 
 
 def _fts_consistency_check(ctx: RuntimeContext) -> DoctorCheck:
@@ -134,20 +146,18 @@ def _fts_consistency_check(ctx: RuntimeContext) -> DoctorCheck:
     forgets a trigger).
     """
     with session_scope(ctx.session_factory) as session:
-        span_count = session.execute(text("SELECT COUNT(*) FROM source_spans")).scalar_one()
-        fts_count = session.execute(text("SELECT COUNT(*) FROM source_spans_fts")).scalar_one()
-        orphan_count = session.execute(
-            text(
-                """
+        span_count = session.execute(
+            text("SELECT COUNT(*) FROM source_spans")
+        ).scalar_one()
+        fts_count = session.execute(
+            text("SELECT COUNT(*) FROM source_spans_fts")
+        ).scalar_one()
+        orphan_count = session.execute(text("""
                 SELECT COUNT(*) FROM source_spans_fts AS fts
                 LEFT JOIN source_spans AS s ON s.id = fts.span_id
                 WHERE s.id IS NULL
-                """
-            )
-        ).scalar_one()
+                """)).scalar_one()
 
     ok = span_count == fts_count and orphan_count == 0
-    detail = (
-        f"source_spans={span_count}, source_spans_fts={fts_count}, orphaned_fts_rows={orphan_count}"
-    )
+    detail = f"source_spans={span_count}, source_spans_fts={fts_count}, orphaned_fts_rows={orphan_count}"
     return DoctorCheck(name="fts_consistency", ok=ok, detail=detail)

@@ -35,7 +35,9 @@ def test_artifacts_lists_ingested_artifacts(runtime_ctx: RuntimeContext) -> None
     state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":artifacts")
     assert state.mode == "artifacts"
     assert state.status == "idle"
-    assert len(_artifacts_result(state)) == 7  # matches ingested_workspace's 7 fixture files
+    assert (
+        len(_artifacts_result(state)) == 7
+    )  # matches ingested_workspace's 7 fixture files
     assert state.activity[-1].status == "success"
 
 
@@ -52,7 +54,9 @@ def test_search_calls_existing_service_and_returns_full_citations(
         assert hit.provenance.layer in ("raw", "extracted", "derived", "user")
 
 
-def test_search_without_query_is_a_usage_error_not_a_crash(runtime_ctx: RuntimeContext) -> None:
+def test_search_without_query_is_a_usage_error_not_a_crash(
+    runtime_ctx: RuntimeContext,
+) -> None:
     state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":search")
     assert state.status == "error"
     assert "Usage" in (state.status_message or "")
@@ -80,7 +84,9 @@ def test_search_honors_active_well_filter(runtime_ctx: RuntimeContext) -> None:
         assert hit.provenance.artifact_id == md_artifact_id
 
 
-def test_trace_renders_only_explicit_typed_relation_edges(runtime_ctx: RuntimeContext) -> None:
+def test_trace_renders_only_explicit_typed_relation_edges(
+    runtime_ctx: RuntimeContext,
+) -> None:
     state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":trace widget")
     assert isinstance(state.last_result, TraceResult)
     for edge in state.last_result.edges:
@@ -99,7 +105,9 @@ def test_show_opens_structured_source_detail(runtime_ctx: RuntimeContext) -> Non
 
 
 def test_config_shows_symbol_provenance(runtime_ctx: RuntimeContext) -> None:
-    state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":config CONFIG_WIFI_POWER_SAVE")
+    state = dispatch_text(
+        runtime_ctx, _fresh_state(runtime_ctx), ":config CONFIG_WIFI_POWER_SAVE"
+    )
     assert state.status == "idle"
     assert isinstance(state.last_result, ConfigSymbolResult)
     assert state.last_result.symbol == "CONFIG_WIFI_POWER_SAVE"
@@ -121,7 +129,9 @@ def test_doctor_displays_checks_and_never_repairs(runtime_ctx: RuntimeContext) -
     assert state.status == "idle"
 
 
-def test_bad_command_is_actionable_and_has_no_traceback(runtime_ctx: RuntimeContext) -> None:
+def test_bad_command_is_actionable_and_has_no_traceback(
+    runtime_ctx: RuntimeContext,
+) -> None:
     state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":bogus")
     assert state.status == "error"
     assert "Traceback" not in (state.status_message or "")
@@ -135,7 +145,9 @@ def test_history_records_success_and_failure(runtime_ctx: RuntimeContext) -> Non
     assert [e.status for e in state.activity] == ["success", "error"]
 
 
-def test_refresh_reruns_the_last_successful_command(runtime_ctx: RuntimeContext) -> None:
+def test_refresh_reruns_the_last_successful_command(
+    runtime_ctx: RuntimeContext,
+) -> None:
     state = dispatch_text(runtime_ctx, _fresh_state(runtime_ctx), ":search widget")
     assert isinstance(state.last_result, SearchResult)
     original_hits = len(state.last_result.hits)

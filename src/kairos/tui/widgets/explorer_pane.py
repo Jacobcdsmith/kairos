@@ -35,7 +35,12 @@ _LAYER_GLYPH = {
     "user": "\u270e",
 }
 
-_LAYER_TAG = {"raw": "RAW", "extracted": "EXTRACTED", "derived": "DERIVED", "user": "USER"}
+_LAYER_TAG = {
+    "raw": "RAW",
+    "extracted": "EXTRACTED",
+    "derived": "DERIVED",
+    "user": "USER",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,7 +72,11 @@ class ExplorerPane(ListView):
 
     def selected_reference(self) -> tuple[SelectionKind, str] | None:
         item = self.highlighted_child
-        if isinstance(item, ExplorerItem) and item.kind is not None and item.target_id is not None:
+        if (
+            isinstance(item, ExplorerItem)
+            and item.kind is not None
+            and item.target_id is not None
+        ):
             return item.kind, item.target_id
         return None
 
@@ -137,21 +146,36 @@ def _search_hit_row(h: SearchHit) -> _Row:
 def _span_row(s: SpanResult) -> _Row:
     tag = _LAYER_TAG[s.provenance.layer]
     glyph = _LAYER_GLYPH.get(s.provenance.layer, "\u25cf")
-    first_line = s.text_content.strip().splitlines()[0] if s.text_content.strip() else s.span_kind
+    first_line = (
+        s.text_content.strip().splitlines()[0]
+        if s.text_content.strip()
+        else s.span_kind
+    )
     label = f"  {glyph} [{s.span_kind}] {first_line[:56]}"
     return _Row(label, f"{s.provenance.locator_str} \u00b7 {tag}", "span", s.span_id)
 
 
 def _trace_node_row(n: TraceNode) -> _Row:
     tag = _LAYER_TAG[n.provenance.layer] if n.provenance else "DERIVED"
-    kind: SelectionKind = n.node_kind if n.node_kind in ("entity", "span", "artifact") else "none"
-    glyph = "\u25c6" if n.node_kind == "entity" else "\u25cb" if n.node_kind == "span" else "\u25a1"
+    kind: SelectionKind = (
+        n.node_kind if n.node_kind in ("entity", "span", "artifact") else "none"
+    )
+    glyph = (
+        "\u25c6"
+        if n.node_kind == "entity"
+        else "\u25cb" if n.node_kind == "span" else "\u25a1"
+    )
     return _Row(f"{glyph}  [{n.node_kind}] {n.label[:56]}", tag, kind, n.node_id)
 
 
 def _config_rows(result: ConfigSymbolResult) -> list[_Row]:
     rows = [
-        _Row(f"\u2699  symbol {result.symbol}", f"type={result.symbol_type or '?'}", None, None),
+        _Row(
+            f"\u2699  symbol {result.symbol}",
+            f"type={result.symbol_type or '?'}",
+            None,
+            None,
+        ),
         _Row(f"  \u2514 default: {result.default or '(none)'}", "", None, None),
         _Row(f"  \u2514 depends_on: {result.depends_on or '(none)'}", "", None, None),
     ]
@@ -162,7 +186,11 @@ def _config_rows(result: ConfigSymbolResult) -> list[_Row]:
 def _log_row(h: LogHit) -> _Row:
     tag = _LAYER_TAG[h.provenance.layer]
     glyph = _LAYER_GLYPH.get(h.provenance.layer, "\u25cf")
-    level_glyph = "\u2717" if h.level == "ERROR" else "\u26a0" if h.level == "WARNING" else "\u25b8"
+    level_glyph = (
+        "\u2717"
+        if h.level == "ERROR"
+        else "\u26a0" if h.level == "WARNING" else "\u25b8"
+    )
     label = f"{glyph}  {level_glyph} line {h.line_number}: {h.message[:46]}"
     sub = f"{h.level or ''} {h.component or ''} \u00b7 {tag}".strip()
     return _Row(label, sub, "span", h.provenance.locator_str)
@@ -196,22 +224,35 @@ def _note_row(n: NoteResult) -> _Row:
 
 def _dashboard_rows(d: DashboardResult) -> list[_Row]:
     rows: list[_Row] = []
-    rows.append(_Row("▣  Artifacts", str(d.total_artifacts), "artifact", "dashboard:artifacts"))
-    rows.append(_Row("◈  Entities", str(d.total_entities), "entity", "dashboard:entities"))
-    rows.append(_Row("◉  Relations", str(d.total_relations), "relation", "dashboard:relations"))
+    rows.append(
+        _Row("▣  Artifacts", str(d.total_artifacts), "artifact", "dashboard:artifacts")
+    )
+    rows.append(
+        _Row("◈  Entities", str(d.total_entities), "entity", "dashboard:entities")
+    )
+    rows.append(
+        _Row("◉  Relations", str(d.total_relations), "relation", "dashboard:relations")
+    )
     rows.append(_Row("▤  Spans", str(d.total_spans), "span", "dashboard:spans"))
     rows.append(_Row("◈  Wells", str(d.total_wells), "well", "dashboard:wells"))
     if d.parse_errors:
-        rows.append(_Row("⚠  Parse errors", str(d.parse_errors), "artifact", "dashboard:errors"))
+        rows.append(
+            _Row("⚠  Parse errors", str(d.parse_errors), "artifact", "dashboard:errors")
+        )
     # Breakdown by kind
     for bk in d.artifacts_by_kind:
         sub = f"{bk.count} total · {bk.status_ok} ok, {bk.status_error} errors"
-        rows.append(_Row(f"  ▸  {bk.kind}", sub, "artifact", f"dashboard:kind:{bk.kind}"))
+        rows.append(
+            _Row(f"  ▸  {bk.kind}", sub, "artifact", f"dashboard:kind:{bk.kind}")
+        )
     # Recent activity
     for ev in d.recent_activity:
-        rows.append(_Row(
-            f"  ▸  {ev.event_type}",
-            ev.occurred_at.isoformat(timespec="minutes"),
-            None, None,
-        ))
+        rows.append(
+            _Row(
+                f"  ▸  {ev.event_type}",
+                ev.occurred_at.isoformat(timespec="minutes"),
+                None,
+                None,
+            )
+        )
     return rows or [_Row("○  Empty workspace — try :ingest .", "", None, None)]

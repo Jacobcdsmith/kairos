@@ -20,13 +20,17 @@ from tests.integration.conftest import FIXTURES, run_in
 def _first_artifact_id(workspace: Path, kind: str) -> str:
     conn = sqlite3.connect(workspace / ".kairos" / "kairos.db")
     try:
-        row = conn.execute("SELECT id FROM artifacts WHERE kind = ? LIMIT 1", (kind,)).fetchone()
+        row = conn.execute(
+            "SELECT id FROM artifacts WHERE kind = ? LIMIT 1", (kind,)
+        ).fetchone()
         return cast(str, row[0])
     finally:
         conn.close()
 
 
-def test_search_output_carries_full_provenance(runner: CliRunner, workspace: Path) -> None:
+def test_search_output_carries_full_provenance(
+    runner: CliRunner, workspace: Path
+) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
     artifact_id = _first_artifact_id(workspace, "markdown")
 
@@ -40,7 +44,9 @@ def test_search_output_carries_full_provenance(runner: CliRunner, workspace: Pat
     assert "lines:" in result.output
 
 
-def test_trace_span_node_carries_full_provenance(runner: CliRunner, workspace: Path) -> None:
+def test_trace_span_node_carries_full_provenance(
+    runner: CliRunner, workspace: Path
+) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
     artifact_id = _first_artifact_id(workspace, "markdown")
 
@@ -52,8 +58,12 @@ def test_trace_span_node_carries_full_provenance(runner: CliRunner, workspace: P
     assert "extracted" in result.output
 
 
-def test_config_output_carries_full_provenance(runner: CliRunner, workspace: Path) -> None:
-    run_in(runner, workspace, ["ingest", str(FIXTURES / "kconfig" / "sample_menu.json")])
+def test_config_output_carries_full_provenance(
+    runner: CliRunner, workspace: Path
+) -> None:
+    run_in(
+        runner, workspace, ["ingest", str(FIXTURES / "kconfig" / "sample_menu.json")]
+    )
     artifact_id = _first_artifact_id(workspace, "kconfig")
 
     result = run_in(runner, workspace, ["config", "CONFIG_WIFI_POWER_SAVE"])
@@ -64,7 +74,9 @@ def test_config_output_carries_full_provenance(runner: CliRunner, workspace: Pat
     assert "extracted" in result.output
 
 
-def test_logs_output_carries_full_provenance(runner: CliRunner, workspace: Path) -> None:
+def test_logs_output_carries_full_provenance(
+    runner: CliRunner, workspace: Path
+) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "logs" / "sample.log")])
     artifact_id = _first_artifact_id(workspace, "log")
 

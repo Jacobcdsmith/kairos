@@ -42,12 +42,20 @@ def _well_summary(row: CoherenceWellRow, member_count: int) -> WellSummary:
 def create_well(ctx: RuntimeContext, name: str, purpose: str) -> WellSummary:
     with session_scope(ctx.session_factory) as session:
         if get_well_by_name(session, name) is not None:
-            raise WellAlreadyExistsError(f"A coherence well named {name!r} already exists.")
+            raise WellAlreadyExistsError(
+                f"A coherence well named {name!r} already exists."
+            )
         row = CoherenceWellRow(
-            id=new_id(), name=name, purpose=purpose, created_at=datetime.now(UTC), metadata_json={}
+            id=new_id(),
+            name=name,
+            purpose=purpose,
+            created_at=datetime.now(UTC),
+            metadata_json={},
         )
         insert_well(session, row)
-        append_event(session, ctx.workspace, "well.create", {"well_id": row.id, "name": name})
+        append_event(
+            session, ctx.workspace, "well.create", {"well_id": row.id, "name": name}
+        )
         return _well_summary(row, 0)
 
 
@@ -83,7 +91,9 @@ def add_member(
         return _member_result(row)
 
 
-def _find_member(session: Session, well_id: str, target_id: str) -> WellMemberRow | None:
+def _find_member(
+    session: Session, well_id: str, target_id: str
+) -> WellMemberRow | None:
     for member in list_well_members(session, well_id):
         if member.target_id == target_id:
             return member
@@ -124,7 +134,9 @@ def show_well(ctx: RuntimeContext, well_name: str) -> WellDetail:
 def list_all_wells(ctx: RuntimeContext) -> list[WellSummary]:
     with session_scope(ctx.session_factory) as session:
         rows = list_wells(session)
-        return [_well_summary(row, len(list_well_members(session, row.id))) for row in rows]
+        return [
+            _well_summary(row, len(list_well_members(session, row.id))) for row in rows
+        ]
 
 
 def _member_result(row: WellMemberRow) -> WellMemberResult:

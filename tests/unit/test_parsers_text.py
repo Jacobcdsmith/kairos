@@ -34,7 +34,9 @@ def test_markdown_emits_heading_contains_relations_and_entities() -> None:
     assert {e.canonical_name for e in result.entities} == {"Widgets", "Details"}
     relations = [r for r in result.relations if r.predicate == "heading_contains"]
     assert len(relations) >= 2
-    assert all(r.subject_kind == "entity" and r.object_kind == "span" for r in relations)
+    assert all(
+        r.subject_kind == "entity" and r.object_kind == "span" for r in relations
+    )
 
     # every heading is also mentioned (self-grounding, used by cross-doc trace)
     assert len(result.mentions) == 2
@@ -44,9 +46,13 @@ def test_markdown_nests_child_spans_under_nearest_heading() -> None:
     parser = MarkdownParser()
     result = parser.parse(FIXTURES / "sample.md", "artifact-1")
 
-    headings = {s.text_content: s.id for s in result.spans if s.span_kind == SpanKind.HEADING}
+    headings = {
+        s.text_content: s.id for s in result.spans if s.span_kind == SpanKind.HEADING
+    }
     details_paragraph = next(
-        s for s in result.spans if s.span_kind == SpanKind.PARAGRAPH and "spec" in s.text_content
+        s
+        for s in result.spans
+        if s.span_kind == SpanKind.PARAGRAPH and "spec" in s.text_content
     )
     assert details_paragraph.parent_span_id == headings["Details"]
 

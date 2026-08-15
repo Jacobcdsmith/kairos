@@ -31,8 +31,12 @@ def run(
     term_or_id: Annotated[
         str, typer.Argument(help="A term, entity name, artifact id, or span id.")
     ],
-    depth: Annotated[int, typer.Option("--depth", help="Maximum hops to traverse.")] = 2,
-    well: Annotated[str | None, typer.Option("--well", help="Scope FTS seeding to a well.")] = None,
+    depth: Annotated[
+        int, typer.Option("--depth", help="Maximum hops to traverse.")
+    ] = 2,
+    well: Annotated[
+        str | None, typer.Option("--well", help="Scope FTS seeding to a well.")
+    ] = None,
 ) -> None:
     ctx = RuntimeContext.open(Path.cwd())
     result = trace_service(ctx, term_or_id, depth=depth, well=well)

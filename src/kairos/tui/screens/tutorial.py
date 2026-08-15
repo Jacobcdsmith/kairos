@@ -107,7 +107,9 @@ class TutorialScreen(ModalScreen[None]):
         total = len(_TUTORIAL_STEPS)
         progress = f"Step {self._current_step + 1} of {total}"
 
-        self.query_one("#tutorial-title", Static).update(f"[bold cyan]{title}[/bold cyan]")
+        self.query_one("#tutorial-title", Static).update(
+            f"[bold cyan]{title}[/bold cyan]"
+        )
         self.query_one("#tutorial-body", Static).update(body)
         self.query_one("#tutorial-progress", Static).update(
             f"[dim]{progress} — ← prev | next → | Esc close[/dim]"

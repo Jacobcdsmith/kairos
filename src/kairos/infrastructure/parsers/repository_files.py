@@ -75,7 +75,9 @@ class PythonParser:
                 )
             )
             result.diagnostics.append(
-                Diagnostic(message=f"Python syntax error: {exc.msg} at line {exc.lineno}")
+                Diagnostic(
+                    message=f"Python syntax error: {exc.msg} at line {exc.lineno}"
+                )
             )
             result.parse_status = ParseStatus.FAILED
             return result
@@ -126,7 +128,9 @@ class PythonParser:
                             id=span_id,
                             artifact_id=artifact_id,
                             span_kind=SpanKind.CLASS_DEF,
-                            locator_json=locator_to_json(_line_range_locator(file_path_str, node)),
+                            locator_json=locator_to_json(
+                                _line_range_locator(file_path_str, node)
+                            ),
                             parent_span_id=parent_span_id,
                             ordinal=ordinal[0],
                             text_content=ast.get_docstring(node) or node.name,
@@ -161,7 +165,9 @@ class PythonParser:
                             id=span_id,
                             artifact_id=artifact_id,
                             span_kind=SpanKind.FUNCTION_DEF,
-                            locator_json=locator_to_json(_line_range_locator(file_path_str, node)),
+                            locator_json=locator_to_json(
+                                _line_range_locator(file_path_str, node)
+                            ),
                             parent_span_id=parent_span_id,
                             ordinal=ordinal[0],
                             text_content=ast.get_docstring(node) or node.name,

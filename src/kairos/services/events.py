@@ -53,7 +53,9 @@ def append_event(
     events_path = workspace.events_path
 
     @event.listens_for(session, "after_commit", once=True)
-    def _write_jsonl(_session: Session) -> None:  # pyright: ignore[reportUnusedFunction]
+    def _write_jsonl(
+        _session: Session,
+    ) -> None:  # pyright: ignore[reportUnusedFunction]
         try:
             with events_path.open("a", encoding="utf-8") as f:
                 f.write(line + "\n")

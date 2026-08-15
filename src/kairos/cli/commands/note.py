@@ -24,7 +24,9 @@ def add(
 ) -> None:
     ctx = RuntimeContext.open(Path.cwd())
     note = add_note(ctx, target_id, text)
-    console.print(f"[green]Added note[/green] {note.id} on {note.target_kind} {note.target_id}")
+    console.print(
+        f"[green]Added note[/green] {note.id} on {note.target_kind} {note.target_id}"
+    )
 
 
 @app.command("list")
@@ -43,5 +45,7 @@ def list_(
     table.add_column("created_at")
     table.add_column("body")
     for note in notes:
-        table.add_row(note.id, note.created_at.isoformat(timespec="seconds"), escape(note.body))
+        table.add_row(
+            note.id, note.created_at.isoformat(timespec="seconds"), escape(note.body)
+        )
     console.print(table)

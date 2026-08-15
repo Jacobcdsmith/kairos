@@ -18,8 +18,12 @@ from kairos.services.search import search as search_service
 @cli_command
 def run(
     query: Annotated[str, typer.Argument(help="FTS5 query, e.g. a word or phrase.")],
-    kind: Annotated[str | None, typer.Option("--kind", help="Filter by span kind.")] = None,
-    well: Annotated[str | None, typer.Option("--well", help="Scope to a coherence well.")] = None,
+    kind: Annotated[
+        str | None, typer.Option("--kind", help="Filter by span kind.")
+    ] = None,
+    well: Annotated[
+        str | None, typer.Option("--well", help="Scope to a coherence well.")
+    ] = None,
     limit: Annotated[int, typer.Option("--limit", help="Maximum hits to show.")] = 20,
 ) -> None:
     ctx = RuntimeContext.open(Path.cwd())

@@ -26,7 +26,9 @@ def make_pdf(pages_text: list[str]) -> bytes:
         content_obj_start += 1
     for text in pages_text:
         stream = f"BT /F1 18 Tf 10 100 Td ({text}) Tj ET".encode() if text else b""
-        objs.append(f"<</Length {len(stream)}>>stream\n".encode() + stream + b"\nendstream")
+        objs.append(
+            f"<</Length {len(stream)}>>stream\n".encode() + stream + b"\nendstream"
+        )
     objs.append(b"<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>")
 
     out = bytearray(b"%PDF-1.4\n")

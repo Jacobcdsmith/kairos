@@ -80,7 +80,9 @@ def init_workspace(root: Path, *, name: str | None = None) -> Workspace:
         "created_at": datetime.now(UTC).isoformat(),
         "schema_version": "0001",
     }
-    (kairos_dir / CONFIG_FILENAME).write_text(json.dumps(config, indent=2), encoding="utf-8")
+    (kairos_dir / CONFIG_FILENAME).write_text(
+        json.dumps(config, indent=2), encoding="utf-8"
+    )
     (kairos_dir / EVENTS_FILENAME).touch()
 
     return Workspace(root=root)

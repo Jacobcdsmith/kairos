@@ -16,7 +16,9 @@ from kairos.services.context import RuntimeContext
 
 @cli_command
 def run(
-    kind: Annotated[str | None, typer.Option("--kind", help="Filter by artifact kind.")] = None,
+    kind: Annotated[
+        str | None, typer.Option("--kind", help="Filter by artifact kind.")
+    ] = None,
     limit: Annotated[int, typer.Option("--limit", help="Maximum rows to show.")] = 50,
 ) -> None:
     ctx = RuntimeContext.open(Path.cwd())

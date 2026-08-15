@@ -29,7 +29,9 @@ class ArtifactRow(Base):
     parser_name: Mapped[str] = mapped_column(String, nullable=False)
     parser_version: Mapped[str] = mapped_column(String, nullable=False)
     parse_status: Mapped[str] = mapped_column(String, nullable=False)
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class SourceSpanRow(Base):
@@ -46,7 +48,9 @@ class SourceSpanRow(Base):
     )
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     text_content: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class EntityRow(Base):
@@ -56,7 +60,9 @@ class EntityRow(Base):
     canonical_name: Mapped[str] = mapped_column(String, index=True, nullable=False)
     entity_type: Mapped[str] = mapped_column(String, index=True, nullable=False)
     origin: Mapped[str] = mapped_column(String, nullable=False)
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class MentionRow(Base):
@@ -72,7 +78,9 @@ class MentionRow(Base):
     surface_form: Mapped[str] = mapped_column(String, nullable=False)
     extraction_rule: Mapped[str] = mapped_column(String, nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class RelationRow(Base):
@@ -90,7 +98,9 @@ class RelationRow(Base):
     origin: Mapped[str] = mapped_column(String, nullable=False)
     derivation_rule: Mapped[str | None] = mapped_column(String, nullable=True)
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class NoteRow(Base):
@@ -104,7 +114,9 @@ class NoteRow(Base):
     supersedes_note_id: Mapped[str | None] = mapped_column(
         String, ForeignKey("notes.id"), nullable=True
     )
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class CoherenceWellRow(Base):
@@ -114,7 +126,9 @@ class CoherenceWellRow(Base):
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     purpose: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class WellMemberRow(Base):
@@ -128,7 +142,9 @@ class WellMemberRow(Base):
     target_kind: Mapped[str] = mapped_column(String, nullable=False)
     added_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    metadata_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    metadata_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
 
 class EventRow(Base):
@@ -137,4 +153,6 @@ class EventRow(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String, index=True, nullable=False)
-    payload_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    payload_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )

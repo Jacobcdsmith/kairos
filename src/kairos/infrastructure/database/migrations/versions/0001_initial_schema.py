@@ -38,16 +38,22 @@ def upgrade() -> None:
     op.create_table(
         "source_spans",
         sa.Column("id", sa.String, primary_key=True),
-        sa.Column("artifact_id", sa.String, sa.ForeignKey("artifacts.id"), nullable=False),
+        sa.Column(
+            "artifact_id", sa.String, sa.ForeignKey("artifacts.id"), nullable=False
+        ),
         sa.Column("span_kind", sa.String, nullable=False),
         sa.Column("locator_json", sa.JSON, nullable=False),
-        sa.Column("parent_span_id", sa.String, sa.ForeignKey("source_spans.id"), nullable=True),
+        sa.Column(
+            "parent_span_id", sa.String, sa.ForeignKey("source_spans.id"), nullable=True
+        ),
         sa.Column("ordinal", sa.Integer, nullable=False),
         sa.Column("text_content", sa.Text, nullable=False),
         sa.Column("metadata_json", sa.JSON, nullable=False),
     )
     op.create_index("ix_source_spans_artifact_id", "source_spans", ["artifact_id"])
-    op.create_index("ix_source_spans_parent_span_id", "source_spans", ["parent_span_id"])
+    op.create_index(
+        "ix_source_spans_parent_span_id", "source_spans", ["parent_span_id"]
+    )
 
     op.create_table(
         "entities",
@@ -64,7 +70,12 @@ def upgrade() -> None:
         "mentions",
         sa.Column("id", sa.String, primary_key=True),
         sa.Column("entity_id", sa.String, sa.ForeignKey("entities.id"), nullable=False),
-        sa.Column("source_span_id", sa.String, sa.ForeignKey("source_spans.id"), nullable=False),
+        sa.Column(
+            "source_span_id",
+            sa.String,
+            sa.ForeignKey("source_spans.id"),
+            nullable=False,
+        ),
         sa.Column("surface_form", sa.String, nullable=False),
         sa.Column("extraction_rule", sa.String, nullable=False),
         sa.Column("confidence", sa.Float(), nullable=False),
@@ -81,7 +92,12 @@ def upgrade() -> None:
         sa.Column("predicate", sa.String, nullable=False),
         sa.Column("object_id", sa.String, nullable=False),
         sa.Column("object_kind", sa.String, nullable=False),
-        sa.Column("evidence_span_id", sa.String, sa.ForeignKey("source_spans.id"), nullable=True),
+        sa.Column(
+            "evidence_span_id",
+            sa.String,
+            sa.ForeignKey("source_spans.id"),
+            nullable=True,
+        ),
         sa.Column("origin", sa.String, nullable=False),
         sa.Column("derivation_rule", sa.String, nullable=True),
         sa.Column("confidence", sa.Float(), nullable=False),
@@ -98,7 +114,9 @@ def upgrade() -> None:
         sa.Column("target_kind", sa.String, nullable=False),
         sa.Column("body", sa.Text, nullable=False),
         sa.Column("created_at", sa.DateTime, nullable=False),
-        sa.Column("supersedes_note_id", sa.String, sa.ForeignKey("notes.id"), nullable=True),
+        sa.Column(
+            "supersedes_note_id", sa.String, sa.ForeignKey("notes.id"), nullable=True
+        ),
         sa.Column("metadata_json", sa.JSON, nullable=False),
     )
     op.create_index("ix_notes_target_id", "notes", ["target_id"])
@@ -116,7 +134,9 @@ def upgrade() -> None:
     op.create_table(
         "well_members",
         sa.Column("id", sa.String, primary_key=True),
-        sa.Column("well_id", sa.String, sa.ForeignKey("coherence_wells.id"), nullable=False),
+        sa.Column(
+            "well_id", sa.String, sa.ForeignKey("coherence_wells.id"), nullable=False
+        ),
         sa.Column("target_id", sa.String, nullable=False),
         sa.Column("target_kind", sa.String, nullable=False),
         sa.Column("added_at", sa.DateTime, nullable=False),
@@ -140,18 +160,15 @@ def upgrade() -> None:
     # virtual tables), kept in sync by triggers so no write path can bypass
     # the index. span_id/artifact_id/span_kind are UNINDEXED: join keys and
     # pre-filters, not searched text.
-    op.execute(
-        """
+    op.execute("""
         CREATE VIRTUAL TABLE source_spans_fts USING fts5(
             text_content,
             span_id UNINDEXED,
             artifact_id UNINDEXED,
             span_kind UNINDEXED
         )
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         CREATE TRIGGER source_spans_fts_ai AFTER INSERT ON source_spans BEGIN
             INSERT INTO source_spans_fts(rowid, text_content, span_id, artifact_id, span_kind)
             VALUES (
@@ -159,17 +176,13 @@ def upgrade() -> None:
                 new.text_content, new.id, new.artifact_id, new.span_kind
             );
         END
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         CREATE TRIGGER source_spans_fts_ad AFTER DELETE ON source_spans BEGIN
             DELETE FROM source_spans_fts WHERE span_id = old.id;
         END
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         CREATE TRIGGER source_spans_fts_au AFTER UPDATE ON source_spans BEGIN
             DELETE FROM source_spans_fts WHERE span_id = old.id;
             INSERT INTO source_spans_fts(rowid, text_content, span_id, artifact_id, span_kind)
@@ -178,8 +191,7 @@ def upgrade() -> None:
                 new.text_content, new.id, new.artifact_id, new.span_kind
             );
         END
-        """
-    )
+        """)
 
 
 def downgrade() -> None:

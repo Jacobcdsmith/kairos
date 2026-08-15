@@ -17,7 +17,9 @@ from kairos.services.context import RuntimeContext
 
 @cli_command
 def run(
-    symbol: Annotated[str, typer.Argument(help="Kconfig symbol name, e.g. CONFIG_WIFI.")],
+    symbol: Annotated[
+        str, typer.Argument(help="Kconfig symbol name, e.g. CONFIG_WIFI.")
+    ],
 ) -> None:
     ctx = RuntimeContext.open(Path.cwd())
     result = get_config_symbol(ctx, symbol)

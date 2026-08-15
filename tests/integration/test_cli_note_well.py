@@ -33,7 +33,9 @@ def test_note_add_and_list(runner: CliRunner, workspace: Path) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
     artifact_id = _first_artifact_id(workspace)
 
-    result = run_in(runner, workspace, ["note", "add", artifact_id, "revisit after v0.2"])
+    result = run_in(
+        runner, workspace, ["note", "add", artifact_id, "revisit after v0.2"]
+    )
     assert result.exit_code == 0, result.output
 
     result = run_in(runner, workspace, ["note", "list", artifact_id])

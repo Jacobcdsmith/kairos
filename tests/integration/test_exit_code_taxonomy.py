@@ -33,7 +33,9 @@ def test_missing_workspace_is_code_2(runner: CliRunner, tmp_path: Path) -> None:
     assert result.exit_code == 2
 
 
-def test_init_on_existing_workspace_is_code_2(runner: CliRunner, workspace: Path) -> None:
+def test_init_on_existing_workspace_is_code_2(
+    runner: CliRunner, workspace: Path
+) -> None:
     result = run_in(runner, workspace.parent, ["init", str(workspace)])
     assert result.exit_code == 2
 
@@ -44,16 +46,22 @@ def test_bad_artifact_id_is_code_1(runner: CliRunner, workspace: Path) -> None:
 
 
 def test_bad_locator_is_code_1(runner: CliRunner, workspace: Path) -> None:
-    ingest_result = run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
+    ingest_result = run_in(
+        runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")]
+    )
     assert ingest_result.exit_code == 0
     artifact_id = _first_artifact_id(workspace)
 
-    result = run_in(runner, workspace, ["show", artifact_id, "--locator", "not-a-locator"])
+    result = run_in(
+        runner, workspace, ["show", artifact_id, "--locator", "not-a-locator"]
+    )
     assert result.exit_code == 1
 
 
 def test_unknown_kconfig_symbol_is_code_1(runner: CliRunner, workspace: Path) -> None:
-    run_in(runner, workspace, ["ingest", str(FIXTURES / "kconfig" / "sample_menu.json")])
+    run_in(
+        runner, workspace, ["ingest", str(FIXTURES / "kconfig" / "sample_menu.json")]
+    )
     result = run_in(runner, workspace, ["config", "CONFIG_DOES_NOT_EXIST"])
     assert result.exit_code == 1
 

@@ -21,7 +21,9 @@ def run(
     before: Annotated[
         int, typer.Option("--before", help="Lines of context before each match.")
     ] = 0,
-    after: Annotated[int, typer.Option("--after", help="Lines of context after each match.")] = 0,
+    after: Annotated[
+        int, typer.Option("--after", help="Lines of context after each match.")
+    ] = 0,
     level: Annotated[
         str | None, typer.Option("--level", help="Filter matches by log level.")
     ] = None,

@@ -68,7 +68,9 @@ def parse(text: str) -> Command:
     if stripped == "?":
         return Command(name="help", args=(), raw=raw)
     if not stripped.startswith(":"):
-        raise CommandParseError(f"Not a command: {text!r}. Commands start with ':' — try :help.")
+        raise CommandParseError(
+            f"Not a command: {text!r}. Commands start with ':' — try :help."
+        )
 
     body = stripped[1:].strip()
     if not body:

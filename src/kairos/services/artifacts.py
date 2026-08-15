@@ -5,7 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from kairos.infrastructure.database.engine import session_scope
-from kairos.infrastructure.database.repositories import list_artifacts as repo_list_artifacts
+from kairos.infrastructure.database.repositories import (
+    list_artifacts as repo_list_artifacts,
+)
 from kairos.schemas.artifact import ArtifactSummary
 from kairos.services.context import RuntimeContext
 

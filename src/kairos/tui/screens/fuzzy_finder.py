@@ -89,7 +89,8 @@ class FuzzyFinderScreen(ModalScreen[FinderItem | None]):
             filtered = [
                 item
                 for item in self._all_items
-                if query_lower in item.label.lower() or query_lower in item.sublabel.lower()
+                if query_lower in item.label.lower()
+                or query_lower in item.sublabel.lower()
             ]
 
         for item in filtered[:50]:

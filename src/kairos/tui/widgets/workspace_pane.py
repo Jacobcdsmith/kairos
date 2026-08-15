@@ -49,11 +49,15 @@ def _render_result(state: TuiState) -> object:
         return _render_dashboard(result)
 
     if (events := as_list_of(result, ActivityEvent)) is not None:
-        table = Table(title="\u25cb Recent local activity", show_lines=False, padding=(0, 2))
+        table = Table(
+            title="\u25cb Recent local activity", show_lines=False, padding=(0, 2)
+        )
         table.add_column("occurred_at", style="dim")
         table.add_column("event_type", style="cyan")
         for event in events:
-            table.add_row(event.occurred_at.isoformat(timespec="seconds"), event.event_type)
+            table.add_row(
+                event.occurred_at.isoformat(timespec="seconds"), event.event_type
+            )
         return table
 
     if (artifacts := as_list_of(result, ArtifactSummary)) is not None:
@@ -68,7 +72,9 @@ def _render_result(state: TuiState) -> object:
 
     if isinstance(result, SearchResult):
         table = Table(
-            title=f'\u25cf Search: "{escape(result.query)}"', show_lines=False, padding=(0, 2)
+            title=f'\u25cf Search: "{escape(result.query)}"',
+            show_lines=False,
+            padding=(0, 2),
         )
         table.add_column("path", style="cyan")
         add_provenance_columns(table)
@@ -83,7 +89,9 @@ def _render_result(state: TuiState) -> object:
 
     if isinstance(result, ArtifactDetail):
         table = Table(
-            title=f"\u25a1 {escape(result.artifact.source_path)}", show_lines=False, padding=(0, 2)
+            title=f"\u25a1 {escape(result.artifact.source_path)}",
+            show_lines=False,
+            padding=(0, 2),
         )
         table.add_column("span_kind", style="magenta")
         add_provenance_columns(table, include_locator=True)
@@ -95,13 +103,12 @@ def _render_result(state: TuiState) -> object:
         text = Text()
         text.append(f"\u25c6 trace: {result.query}\n", style="bold cyan")
         for edge in result.edges:
-            text.append(
-                f"  {edge.subject_id[:8]} ", style="dim"
-            )
+            text.append(f"  {edge.subject_id[:8]} ", style="dim")
             text.append(f"\u2500\u2500{edge.predicate}\u2500\u2500> ", style="yellow")
             text.append(f"{edge.object_id[:8]}\n", style="dim")
             text.append(
-                f"    ({edge.layer}, rule={edge.derivation_rule or 'n/a'})\n", style="dim"
+                f"    ({edge.layer}, rule={edge.derivation_rule or 'n/a'})\n",
+                style="dim",
             )
         if not result.edges:
             text.append("  (no explicit relations found)\n", style="dim italic")
@@ -163,7 +170,9 @@ def _render_result(state: TuiState) -> object:
         table.add_column("target_id", style="cyan")
         table.add_column("note", style="dim")
         for member in result.members:
-            table.add_row(member.target_kind, member.target_id, escape(member.note or ""))
+            table.add_row(
+                member.target_kind, member.target_id, escape(member.note or "")
+            )
         return table
 
     if (notes := as_list_of(result, NoteResult)) is not None:
@@ -221,7 +230,9 @@ def _render_dashboard(d: DashboardResult) -> object:
         items.append(breakdown)
 
     if d.parse_errors:
-        items.append(f"[red]⚠  {d.parse_errors} parse error(s) across all artifacts[/red]")
+        items.append(
+            f"[red]⚠  {d.parse_errors} parse error(s) across all artifacts[/red]"
+        )
 
     # Recent activity
     if d.recent_activity:

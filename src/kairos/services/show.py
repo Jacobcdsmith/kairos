@@ -7,13 +7,18 @@ from pathlib import Path
 from kairos.domain.errors import ArtifactNotFoundError
 from kairos.domain.locators import locator_from_json, parse_locator_str
 from kairos.infrastructure.database.engine import session_scope
-from kairos.infrastructure.database.repositories import get_artifact, list_spans_for_artifact
+from kairos.infrastructure.database.repositories import (
+    get_artifact,
+    list_spans_for_artifact,
+)
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary, SpanResult
 from kairos.schemas.provenance import build_envelope
 from kairos.services.context import RuntimeContext
 
 
-def show(ctx: RuntimeContext, artifact_id: str, *, locator: str | None = None) -> ArtifactDetail:
+def show(
+    ctx: RuntimeContext, artifact_id: str, *, locator: str | None = None
+) -> ArtifactDetail:
     wanted_locator = parse_locator_str(locator) if locator is not None else None
 
     with session_scope(ctx.session_factory) as session:

@@ -9,7 +9,9 @@ from typer.testing import CliRunner
 from tests.integration.conftest import FIXTURES, run_in
 
 
-def test_trace_by_entity_name_reaches_sibling_spans(runner: CliRunner, workspace: Path) -> None:
+def test_trace_by_entity_name_reaches_sibling_spans(
+    runner: CliRunner, workspace: Path
+) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
 
     result = run_in(runner, workspace, ["trace", "Widgets", "--depth", "2"])
@@ -20,7 +22,9 @@ def test_trace_by_entity_name_reaches_sibling_spans(runner: CliRunner, workspace
     assert "sample.md" in result.output
 
 
-def test_trace_crosses_artifacts_via_shared_heading(runner: CliRunner, workspace: Path) -> None:
+def test_trace_crosses_artifacts_via_shared_heading(
+    runner: CliRunner, workspace: Path
+) -> None:
     """The headline scenario: a term with no entity of its own (inside a
     paragraph in one document) must reach a *different* document in a
     couple of hops, by climbing up to a heading entity the two documents
@@ -41,7 +45,9 @@ def test_trace_crosses_artifacts_via_shared_heading(runner: CliRunner, workspace
     assert "sample2.md" in result.output
 
 
-def test_trace_unknown_term_reports_no_matches(runner: CliRunner, workspace: Path) -> None:
+def test_trace_unknown_term_reports_no_matches(
+    runner: CliRunner, workspace: Path
+) -> None:
     run_in(runner, workspace, ["ingest", str(FIXTURES / "text" / "sample.md")])
     result = run_in(runner, workspace, ["trace", "nonexistenttermxyz"])
     assert result.exit_code == 0

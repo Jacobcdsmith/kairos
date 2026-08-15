@@ -25,7 +25,9 @@ class ParseResult:
     relations: list[Relation] = field(default_factory=lambda: list[Relation]())
     diagnostics: list[Diagnostic] = field(default_factory=lambda: list[Diagnostic]())
     parse_status: ParseStatus = ParseStatus.OK
-    artifact_metadata: dict[str, object] = field(default_factory=lambda: dict[str, object]())
+    artifact_metadata: dict[str, object] = field(
+        default_factory=lambda: dict[str, object]()
+    )
 
 
 class Parser(Protocol):

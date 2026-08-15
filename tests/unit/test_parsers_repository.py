@@ -53,7 +53,9 @@ def test_imports_emit_derived_relations() -> None:
     }
     assert imported_names == {"os", "collections"}
     assert len(imports) == 2
-    assert all(r.subject_kind == "entity" and r.object_kind == "entity" for r in imports)
+    assert all(
+        r.subject_kind == "entity" and r.object_kind == "entity" for r in imports
+    )
 
 
 def test_entities_are_grounded_by_mentions() -> None:
@@ -76,13 +78,15 @@ def test_entities_are_grounded_by_mentions() -> None:
         e
         for e in result.entities
         if e.entity_type in directly_extracted_types
-        and not (e.entity_type == EntityType.MODULE.value and e.canonical_name != module_name)
+        and not (
+            e.entity_type == EntityType.MODULE.value and e.canonical_name != module_name
+        )
     ]
     mentioned_entity_ids = {m.entity_id for m in result.mentions}
     for entity in grounded_entities:
-        assert entity.id in mentioned_entity_ids, (
-            f"{entity.entity_type} entity {entity.canonical_name!r} has no grounding mention"
-        )
+        assert (
+            entity.id in mentioned_entity_ids
+        ), f"{entity.entity_type} entity {entity.canonical_name!r} has no grounding mention"
 
 
 def test_syntax_error_is_not_dropped(tmp_path: Path) -> None:

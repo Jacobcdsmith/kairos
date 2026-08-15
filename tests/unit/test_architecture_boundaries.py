@@ -65,7 +65,8 @@ def test_domain_layer_has_no_prohibited_imports() -> None:
     for path in domain_files:
         for name in _imported_module_names(path.read_text(encoding="utf-8")):
             if any(
-                name == prefix or name.startswith(prefix + ".") for prefix in _PROHIBITED_PREFIXES
+                name == prefix or name.startswith(prefix + ".")
+                for prefix in _PROHIBITED_PREFIXES
             ):
                 violations.append(f"{path.name} imports {name!r}")
 
@@ -91,7 +92,9 @@ def test_only_kairos_tui_imports_textual() -> None:
             if any(name == p or name.startswith(p + ".") for p in tui_prefixes):
                 violations.append(f"{path.relative_to(_SRC_DIR)} imports {name!r}")
 
-    for name in _module_level_imported_names(_TUI_COMMAND_FILE.read_text(encoding="utf-8")):
+    for name in _module_level_imported_names(
+        _TUI_COMMAND_FILE.read_text(encoding="utf-8")
+    ):
         if any(name == p or name.startswith(p + ".") for p in tui_prefixes):
             violations.append(f"cli/commands/tui.py imports {name!r} at module scope")
 

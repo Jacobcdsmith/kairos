@@ -14,7 +14,13 @@ from pathlib import Path
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
-from kairos.domain.enums import ArtifactKind, Origin, ParseStatus, RelationPredicate, SpanKind
+from kairos.domain.enums import (
+    ArtifactKind,
+    Origin,
+    ParseStatus,
+    RelationPredicate,
+    SpanKind,
+)
 from kairos.domain.ids import new_id
 from kairos.domain.locators import PdfPageLocator, locator_to_json
 from kairos.domain.models import Diagnostic, Relation, SourceSpan
@@ -82,7 +88,9 @@ class PdfParser:
                     result.diagnostics.append(
                         Diagnostic(
                             message=f"Page {page_number} has no extractable text",
-                            locator_json=locator_to_json(PdfPageLocator(page=page_number)),
+                            locator_json=locator_to_json(
+                                PdfPageLocator(page=page_number)
+                            ),
                         )
                     )
 
@@ -116,5 +124,7 @@ class PdfParser:
                 )
             previous_span_id = span_id
 
-        result.parse_status = ParseStatus.PARTIAL if any_missing_text else ParseStatus.OK
+        result.parse_status = (
+            ParseStatus.PARTIAL if any_missing_text else ParseStatus.OK
+        )
         return result

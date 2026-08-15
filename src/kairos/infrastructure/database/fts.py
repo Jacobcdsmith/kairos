@@ -50,8 +50,7 @@ def search_spans(
             params[f"aid_{i}"] = aid
 
     where_sql = " AND ".join(clauses)
-    stmt = text(
-        f"""
+    stmt = text(f"""
         SELECT span_id, artifact_id, span_kind,
                snippet(source_spans_fts, 0, '[', ']', '...', 12) AS snippet,
                bm25(source_spans_fts) AS rank
@@ -59,8 +58,7 @@ def search_spans(
         WHERE {where_sql}
         ORDER BY rank
         LIMIT :limit
-        """
-    )
+        """)
     try:
         rows = session.execute(stmt, params).all()
     except OperationalError as exc:

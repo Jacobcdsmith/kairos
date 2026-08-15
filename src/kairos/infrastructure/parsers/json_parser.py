@@ -13,7 +13,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from kairos.domain.enums import ArtifactKind, Origin, ParseStatus, RelationPredicate, SpanKind
+from kairos.domain.enums import (
+    ArtifactKind,
+    Origin,
+    ParseStatus,
+    RelationPredicate,
+    SpanKind,
+)
 from kairos.domain.ids import new_id
 from kairos.domain.json_types import JsonValue
 from kairos.domain.locators import JsonPathLocator, locator_to_json
@@ -57,7 +63,9 @@ class JsonParser:
                 )
             )
             result.diagnostics.append(
-                Diagnostic(message=f"Invalid JSON: {exc.msg} at line {exc.lineno}, col {exc.colno}")
+                Diagnostic(
+                    message=f"Invalid JSON: {exc.msg} at line {exc.lineno}, col {exc.colno}"
+                )
             )
             result.parse_status = ParseStatus.FAILED
             return result

@@ -37,7 +37,9 @@ def _fingerprint(paths: list[Path]) -> dict[Path, tuple[str, int]]:
 def _first_artifact_id(workspace: Path) -> str:
     conn = sqlite3.connect(workspace / ".kairos" / "kairos.db")
     try:
-        row = conn.execute("SELECT id FROM artifacts WHERE kind = 'markdown' LIMIT 1").fetchone()
+        row = conn.execute(
+            "SELECT id FROM artifacts WHERE kind = 'markdown' LIMIT 1"
+        ).fetchone()
         return cast(str, row[0])
     finally:
         conn.close()
@@ -71,7 +73,9 @@ def test_full_command_surface_never_mutates_source_files(
     assert before == after, "a registered source file's bytes or mtime changed"
 
 
-def test_doctor_detects_a_corrupted_content_blob(runner: CliRunner, workspace: Path) -> None:
+def test_doctor_detects_a_corrupted_content_blob(
+    runner: CliRunner, workspace: Path
+) -> None:
     md_path = FIXTURES / "text" / "sample.md"
     result = run_in(runner, workspace, ["ingest", str(md_path)])
     assert result.exit_code == 0, result.output
@@ -80,9 +84,9 @@ def test_doctor_detects_a_corrupted_content_blob(runner: CliRunner, workspace: P
     try:
         sha256 = cast(
             str,
-            conn.execute("SELECT sha256 FROM artifacts WHERE kind = 'markdown' LIMIT 1").fetchone()[
-                0
-            ],
+            conn.execute(
+                "SELECT sha256 FROM artifacts WHERE kind = 'markdown' LIMIT 1"
+            ).fetchone()[0],
         )
     finally:
         conn.close()

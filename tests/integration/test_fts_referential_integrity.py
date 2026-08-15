@@ -42,7 +42,10 @@ def test_search_ignores_orphaned_fts_rows_and_doctor_flags_them(
     search_result = run_in(runner, workspace, ["search", "bogus"])
     assert search_result.exit_code == 0
     assert "no-such-span-id" not in search_result.output
-    assert "No matches" in search_result.output or "bogus" not in search_result.output.lower()
+    assert (
+        "No matches" in search_result.output
+        or "bogus" not in search_result.output.lower()
+    )
 
     corrupted = run_in(runner, workspace, ["doctor"])
     assert corrupted.exit_code == 2

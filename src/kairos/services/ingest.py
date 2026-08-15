@@ -100,7 +100,11 @@ def _ingest_one(
         metadata["git"] = git_metadata
     if parse_result.diagnostics:
         metadata["diagnostics"] = [
-            {"message": d.message, "severity": d.severity, "locator_json": d.locator_json}
+            {
+                "message": d.message,
+                "severity": d.severity,
+                "locator_json": d.locator_json,
+            }
             for d in parse_result.diagnostics
         ]
 
@@ -186,7 +190,9 @@ def _ingest_one(
     session.flush()
 
     diagnostics = [
-        IngestDiagnostic(source_path=source_path, message=d.message, severity=d.severity)
+        IngestDiagnostic(
+            source_path=source_path, message=d.message, severity=d.severity
+        )
         for d in parse_result.diagnostics
     ]
 

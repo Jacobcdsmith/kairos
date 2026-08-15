@@ -17,7 +17,9 @@ def test_json_indexes_every_scalar_at_json_path() -> None:
 
     assert result.parse_status == ParseStatus.OK
     scalar_paths = {
-        s.locator_json["json_path"] for s in result.spans if s.span_kind == SpanKind.JSON_SCALAR
+        s.locator_json["json_path"]
+        for s in result.spans
+        if s.span_kind == SpanKind.JSON_SCALAR
     }
     assert "$.name" in scalar_paths
     assert "$.widgets[0].id" in scalar_paths

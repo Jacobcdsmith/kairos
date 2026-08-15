@@ -108,7 +108,9 @@ def _render(state: TuiState) -> str:
         lines = [f"\u25c6 {escape(node.label)}", f"  kind: {node.node_kind}"]
         if node.provenance is not None:
             lines.append(provenance_lines(node.provenance))
-        touching = [e for e in result.edges if selection.id in (e.subject_id, e.object_id)]
+        touching = [
+            e for e in result.edges if selection.id in (e.subject_id, e.object_id)
+        ]
         if touching:
             lines.append("")
             lines.append("  relations:")
@@ -124,7 +126,9 @@ def _render(state: TuiState) -> str:
         return "\n".join(lines)
 
     if (log_hits := as_list_of(result, LogHit)) is not None:
-        hit = next((h for h in log_hits if h.provenance.locator_str == selection.id), None)
+        hit = next(
+            (h for h in log_hits if h.provenance.locator_str == selection.id), None
+        )
         if hit is None:
             return "Selected item is not in the current result set."
         return f"{provenance_lines(hit.provenance)}\n\n{escape(hit.message)}"
@@ -168,7 +172,9 @@ def _render(state: TuiState) -> str:
     return "Nothing to show for the current selection."
 
 
-def _envelope_and_excerpt(state: TuiState) -> tuple[ProvenanceEnvelope | None, str | None]:
+def _envelope_and_excerpt(
+    state: TuiState,
+) -> tuple[ProvenanceEnvelope | None, str | None]:
     selection = state.selection
     result = state.last_result
 
@@ -181,9 +187,13 @@ def _envelope_and_excerpt(state: TuiState) -> tuple[ProvenanceEnvelope | None, s
         return (hit.provenance, hit.text_content) if hit is not None else (None, None)
     if isinstance(result, ArtifactDetail):
         span = next((s for s in result.spans if s.span_id == selection.id), None)
-        return (span.provenance, span.text_content) if span is not None else (None, None)
+        return (
+            (span.provenance, span.text_content) if span is not None else (None, None)
+        )
     if (log_hits := as_list_of(result, LogHit)) is not None:
-        hit = next((h for h in log_hits if h.provenance.locator_str == selection.id), None)
+        hit = next(
+            (h for h in log_hits if h.provenance.locator_str == selection.id), None
+        )
         return (hit.provenance, hit.message) if hit is not None else (None, None)
     if (notes := as_list_of(result, NoteResult)) is not None:
         note = next((n for n in notes if n.id == selection.id), None)

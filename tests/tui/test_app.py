@@ -66,12 +66,16 @@ async def test_header_shows_workspace_well_and_offline_state(
         assert "well: none" in header_text
         assert "LOCAL" in header_text
 
-        await _type_command(pilot, ":well use ")  # missing name: usage error, well stays none
+        await _type_command(
+            pilot, ":well use "
+        )  # missing name: usage error, well stays none
         assert "well: none" in str(app.query_one(HeaderLine).renderable)
 
 
 @pytest.mark.asyncio
-async def test_artifacts_command_lists_ingested_artifacts(runtime_ctx: RuntimeContext) -> None:
+async def test_artifacts_command_lists_ingested_artifacts(
+    runtime_ctx: RuntimeContext,
+) -> None:
     app = KairosApp(runtime_ctx)
     async with app.run_test(size=WIDE) as pilot:
         await _type_command(pilot, ":artifacts")
@@ -84,7 +88,9 @@ async def test_artifacts_command_lists_ingested_artifacts(runtime_ctx: RuntimeCo
 
 
 @pytest.mark.asyncio
-async def test_selecting_artifact_renders_full_citation(runtime_ctx: RuntimeContext) -> None:
+async def test_selecting_artifact_renders_full_citation(
+    runtime_ctx: RuntimeContext,
+) -> None:
     app = KairosApp(runtime_ctx)
     async with app.run_test(size=WIDE) as pilot:
         await _type_command(pilot, ":artifacts markdown")
@@ -102,7 +108,9 @@ async def test_selecting_artifact_renders_full_citation(runtime_ctx: RuntimeCont
 
 
 @pytest.mark.asyncio
-async def test_search_shows_hits_with_full_citations(runtime_ctx: RuntimeContext) -> None:
+async def test_search_shows_hits_with_full_citations(
+    runtime_ctx: RuntimeContext,
+) -> None:
     app = KairosApp(runtime_ctx)
     async with app.run_test(size=WIDE) as pilot:
         await _type_command(pilot, ":search widget")
@@ -174,7 +182,9 @@ async def test_search_honors_active_well_filter(runtime_ctx: RuntimeContext) -> 
         assert isinstance(app.state.last_result, SearchResult)
         scoped_count = len(app.state.last_result.hits)
         assert scoped_count < unscoped_count
-        assert all(h.provenance.artifact_id == md_id for h in app.state.last_result.hits)
+        assert all(
+            h.provenance.artifact_id == md_id for h in app.state.last_result.hits
+        )
 
 
 @pytest.mark.asyncio
@@ -206,14 +216,18 @@ async def test_derived_relation_shows_origin_and_rule_and_similarity_disclaimer(
         result = app.state.last_result
         assert isinstance(result, TraceResult)
         derived_edge = next((e for e in result.edges if e.layer == "derived"), None)
-        assert derived_edge is not None, "expected at least one derived edge from the fixtures"
+        assert (
+            derived_edge is not None
+        ), "expected at least one derived edge from the fixtures"
 
         # Select the node at the derived edge's subject end and confirm the
         # Evidence pane both names the rule and states the non-similarity fact.
         explorer = app.query_one(ExplorerPane)
         explorer.focus()
         target_index = next(
-            i for i, n in enumerate(result.nodes) if n.node_id == derived_edge.subject_id
+            i
+            for i, n in enumerate(result.nodes)
+            if n.node_id == derived_edge.subject_id
         )
         for _ in range(target_index):
             await pilot.press("down")
@@ -256,7 +270,9 @@ async def test_config_shows_symbol_provenance(runtime_ctx: RuntimeContext) -> No
 
 
 @pytest.mark.asyncio
-async def test_logs_shows_hits_with_locators_and_context(runtime_ctx: RuntimeContext) -> None:
+async def test_logs_shows_hits_with_locators_and_context(
+    runtime_ctx: RuntimeContext,
+) -> None:
     app = KairosApp(runtime_ctx)
     async with app.run_test(size=WIDE) as pilot:
         await _type_command(pilot, ":logs widget")
@@ -309,7 +325,12 @@ async def test_focus_cycles_between_panes(runtime_ctx: RuntimeContext) -> None:
             seen.append(app.focused.id if app.focused is not None else None)
             await pilot.press("tab")
             await pilot.pause()
-        assert seen == ["explorer-pane", "workspace-pane", "evidence-pane", "command-line"]
+        assert seen == [
+            "explorer-pane",
+            "workspace-pane",
+            "evidence-pane",
+            "command-line",
+        ]
 
 
 @pytest.mark.asyncio
@@ -343,13 +364,20 @@ async def test_history_records_success_and_failure(runtime_ctx: RuntimeContext) 
 )
 @pytest.mark.asyncio
 async def test_layout_bounds_hold_at_every_width(
-    runtime_ctx: RuntimeContext, width: int, expect_explorer: bool, expect_evidence: bool
+    runtime_ctx: RuntimeContext,
+    width: int,
+    expect_explorer: bool,
+    expect_evidence: bool,
 ) -> None:
     app = KairosApp(runtime_ctx)
     async with app.run_test(size=(width, 40)) as pilot:
         await _type_command(pilot, ":search widget")
-        explorer_visible = app.screen.query_one("#explorer-pane").styles.display != "none"
-        evidence_visible = app.screen.query_one("#evidence-container").styles.display != "none"
+        explorer_visible = (
+            app.screen.query_one("#explorer-pane").styles.display != "none"
+        )
+        evidence_visible = (
+            app.screen.query_one("#evidence-container").styles.display != "none"
+        )
         assert explorer_visible == expect_explorer
         assert evidence_visible == expect_evidence
         # Provenance must still be fully present in state regardless of
@@ -379,7 +407,9 @@ async def test_tui_makes_no_network_access(
 
 
 @pytest.mark.asyncio
-async def test_no_registered_source_fixture_is_modified(runtime_ctx: RuntimeContext) -> None:
+async def test_no_registered_source_fixture_is_modified(
+    runtime_ctx: RuntimeContext,
+) -> None:
     import hashlib
 
     from tests.tui.conftest import FIXTURES
@@ -387,7 +417,9 @@ async def test_no_registered_source_fixture_is_modified(runtime_ctx: RuntimeCont
     fixture_files = sorted(p for p in FIXTURES.rglob("*") if p.is_file())
 
     def _hash_all() -> dict[str, str]:
-        return {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in fixture_files}
+        return {
+            str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in fixture_files
+        }
 
     before = _hash_all()
     app = KairosApp(runtime_ctx)

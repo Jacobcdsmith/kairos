@@ -107,7 +107,9 @@ def parse_locator_str(text: str) -> Locator:
             file_path=m.group(1), start_line=int(m.group(2)), end_line=int(m.group(3))
         )
     if m := _LOG_RE.match(text):
-        return LogEventLocator(line_number=int(m.group(1)), timestamp=m.group(2) or None)
+        return LogEventLocator(
+            line_number=int(m.group(1)), timestamp=m.group(2) or None
+        )
     raise InvalidLocatorError(f"Unrecognized locator string: {text!r}")
 
 

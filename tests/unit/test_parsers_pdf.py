@@ -60,7 +60,9 @@ def test_extraction_failure_message_differs_from_blank_page_message(
     result = parser.parse(FIXTURES / "sample.pdf", "artifact-pdf")
 
     assert result.parse_status == ParseStatus.PARTIAL
-    assert any("Could not extract text from page" in d.message for d in result.diagnostics)
+    assert any(
+        "Could not extract text from page" in d.message for d in result.diagnostics
+    )
     assert not any("has no extractable text" in d.message for d in result.diagnostics)
 
 

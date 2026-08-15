@@ -79,7 +79,9 @@ def show(well_name: Annotated[str, typer.Argument(help="Well name.")]) -> None:
     table.add_column("target_id")
     table.add_column("note")
     for member in detail.members:
-        table.add_row(member.id, member.target_kind, member.target_id, escape(member.note or ""))
+        table.add_row(
+            member.id, member.target_kind, member.target_id, escape(member.note or "")
+        )
     console.print(table)
 
 

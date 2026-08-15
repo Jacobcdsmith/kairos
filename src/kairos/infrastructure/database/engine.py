@@ -31,7 +31,9 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 @contextmanager
-def session_scope(session_factory: sessionmaker[Session]) -> Generator[Session, None, None]:
+def session_scope(
+    session_factory: sessionmaker[Session],
+) -> Generator[Session, None, None]:
     session = session_factory()
     try:
         yield session

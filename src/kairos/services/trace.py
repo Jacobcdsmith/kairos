@@ -75,7 +75,9 @@ def _node_label(session: Session, ref: _NodeRef) -> str:
         if span_row is None:
             return ref.id
         text = (
-            span_row.text_content.strip().splitlines()[0] if span_row.text_content.strip() else ""
+            span_row.text_content.strip().splitlines()[0]
+            if span_row.text_content.strip()
+            else ""
         )
         return text[:80] if text else f"[{span_row.span_kind}]"
     if ref.kind == "artifact":
@@ -128,7 +130,9 @@ def trace(
                 return
             seen_edges.add(edge_key)
             evidence = (
-                _span_provenance(session, ctx, evidence_span_id) if evidence_span_id else None
+                _span_provenance(session, ctx, evidence_span_id)
+                if evidence_span_id
+                else None
             )
             edges.append(
                 TraceEdge(
@@ -153,7 +157,11 @@ def trace(
                     continue
                 visited.add(key)
 
-                provenance = _span_provenance(session, ctx, ref.id) if ref.kind == "span" else None
+                provenance = (
+                    _span_provenance(session, ctx, ref.id)
+                    if ref.kind == "span"
+                    else None
+                )
                 nodes[key] = TraceNode(
                     node_kind=ref.kind,
                     node_id=ref.id,
@@ -219,6 +227,10 @@ def trace(
                         )
                         next_frontier.append(_NodeRef("entity", mention.entity_id))
 
-            frontier = [ref for ref in next_frontier if (ref.kind, ref.id) not in visited]
+            frontier = [
+                ref for ref in next_frontier if (ref.kind, ref.id) not in visited
+            ]
 
-        return TraceResult(query=query, depth=depth, nodes=list(nodes.values()), edges=edges)
+        return TraceResult(
+            query=query, depth=depth, nodes=list(nodes.values()), edges=edges
+        )

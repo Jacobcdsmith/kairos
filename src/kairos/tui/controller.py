@@ -60,16 +60,26 @@ def dispatch_text(runtime_ctx: RuntimeContext, state: TuiState, text: str) -> Tu
     try:
         command = parse(text)
     except CommandParseError as exc:
-        return _record(state, mode=state.mode, command=text, status="error", summary=str(exc))
+        return _record(
+            state, mode=state.mode, command=text, status="error", summary=str(exc)
+        )
 
     if command.name == "quit":
-        return _record(state, mode=state.mode, command=text, status="success", summary="quit")
+        return _record(
+            state, mode=state.mode, command=text, status="success", summary="quit"
+        )
 
     if command.name == "refresh":
-        last = next((e for e in reversed(state.activity) if e.status == "success"), None)
+        last = next(
+            (e for e in reversed(state.activity) if e.status == "success"), None
+        )
         if last is None:
             return _record(
-                state, mode=state.mode, command=text, status="error", summary="Nothing to refresh."
+                state,
+                mode=state.mode,
+                command=text,
+                status="error",
+                summary="Nothing to refresh.",
             )
         return dispatch_text(runtime_ctx, state, last.command)
 
@@ -80,7 +90,9 @@ def dispatch_text(runtime_ctx: RuntimeContext, state: TuiState, text: str) -> Tu
         return _record(state, mode=mode, command=text, status="error", summary=str(exc))
 
 
-def _dispatch(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+def _dispatch(
+    runtime_ctx: RuntimeContext, state: TuiState, command: Command
+) -> TuiState:
     handler = _HANDLERS.get(command.name)
     if handler is None:
         return _record(
@@ -169,7 +181,9 @@ def _home(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
     )
 
 
-def _artifacts(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+def _artifacts(
+    runtime_ctx: RuntimeContext, state: TuiState, command: Command
+) -> TuiState:
     kind = command.args[0] if command.args else None
     results = list_artifacts_service(runtime_ctx, kind=kind)
     return _record(
@@ -270,7 +284,9 @@ def _doctor(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> T
     )
 
 
-def _history(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+def _history(
+    runtime_ctx: RuntimeContext, state: TuiState, command: Command
+) -> TuiState:
     return _record(
         state,
         mode="history",
@@ -281,10 +297,14 @@ def _history(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> 
 
 
 def _help(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
-    return _record(state, mode="help", command=command.raw, status="success", summary="help")
+    return _record(
+        state, mode="help", command=command.raw, status="success", summary="help"
+    )
 
 
-def _tutorial(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+def _tutorial(
+    runtime_ctx: RuntimeContext, state: TuiState, command: Command
+) -> TuiState:
     return _record(
         state,
         mode=state.mode,
@@ -322,7 +342,11 @@ def _well(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
     if sub == "clear":
         new_state = dataclasses.replace(state, active_well=None)
         return _record(
-            new_state, mode="well", command=command.raw, status="success", summary="well cleared"
+            new_state,
+            mode="well",
+            command=command.raw,
+            status="success",
+            summary="well cleared",
         )
     if sub == "show":
         if len(command.args) < 2:
@@ -341,7 +365,9 @@ def _well(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
 
 def _note(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
     if not command.args:
-        raise KairosError("Usage: :note list <target-id> | :note add <target-id> <text>")
+        raise KairosError(
+            "Usage: :note list <target-id> | :note add <target-id> <text>"
+        )
     sub, rest = command.args[0], command.args[1:]
     if sub == "list":
         if not rest:
@@ -368,7 +394,9 @@ def _note(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> Tui
             summary=f"note added ({len(notes)} total on {rest[0]})",
             last_result=notes,
         )
-    raise KairosError(f"Usage: :note list <target-id> | :note add <target-id> <text> (got {sub!r})")
+    raise KairosError(
+        f"Usage: :note list <target-id> | :note add <target-id> <text> (got {sub!r})"
+    )
 
 
 def _ingest(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:

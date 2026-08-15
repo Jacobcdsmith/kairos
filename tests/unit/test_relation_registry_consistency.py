@@ -36,17 +36,19 @@ _UNEVIDENCED_PREDICATES = {"page_precedes", "depends_on"}
 
 def _assert_registry_holds(result: ParseResult) -> None:
     for relation in result.relations:
-        assert relation.origin == Origin.DERIVED, (
-            f"{relation.predicate} must be origin=derived, got {relation.origin}"
-        )
-        assert relation.derivation_rule, f"{relation.predicate} must carry a derivation_rule"
-        assert relation.predicate in _EVIDENCED_PREDICATES | _UNEVIDENCED_PREDICATES, (
-            f"{relation.predicate} is not documented in docs/relation-registry.md"
-        )
+        assert (
+            relation.origin == Origin.DERIVED
+        ), f"{relation.predicate} must be origin=derived, got {relation.origin}"
+        assert (
+            relation.derivation_rule
+        ), f"{relation.predicate} must carry a derivation_rule"
+        assert (
+            relation.predicate in _EVIDENCED_PREDICATES | _UNEVIDENCED_PREDICATES
+        ), f"{relation.predicate} is not documented in docs/relation-registry.md"
         if relation.predicate in _EVIDENCED_PREDICATES:
-            assert relation.evidence_span_id is not None, (
-                f"{relation.predicate} is documented as evidenced but has no evidence_span_id"
-            )
+            assert (
+                relation.evidence_span_id is not None
+            ), f"{relation.predicate} is documented as evidenced but has no evidence_span_id"
 
 
 def test_markdown_relations_match_registry() -> None:
@@ -62,7 +64,9 @@ def test_json_relations_match_registry() -> None:
 
 
 def test_kconfig_relations_match_registry() -> None:
-    result = KconfigParser().parse(FIXTURES / "kconfig" / "sample_menu.json", "artifact-kconfig")
+    result = KconfigParser().parse(
+        FIXTURES / "kconfig" / "sample_menu.json", "artifact-kconfig"
+    )
     assert result.relations
     _assert_registry_holds(result)
 

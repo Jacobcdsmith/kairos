@@ -66,7 +66,9 @@ def list_spans_for_artifact(session: Session, artifact_id: str) -> list[SourceSp
     return list(session.execute(stmt).scalars().all())
 
 
-def list_spans_by_kind(session: Session, artifact_id: str, span_kind: str) -> list[SourceSpanRow]:
+def list_spans_by_kind(
+    session: Session, artifact_id: str, span_kind: str
+) -> list[SourceSpanRow]:
     stmt = select(SourceSpanRow).where(
         SourceSpanRow.artifact_id == artifact_id, SourceSpanRow.span_kind == span_kind
     )
@@ -90,7 +92,9 @@ def find_entities_by_name(session: Session, canonical_name: str) -> list[EntityR
 
 
 def find_entities_by_name_ci(session: Session, canonical_name: str) -> list[EntityRow]:
-    stmt = select(EntityRow).where(func.lower(EntityRow.canonical_name) == canonical_name.lower())
+    stmt = select(EntityRow).where(
+        func.lower(EntityRow.canonical_name) == canonical_name.lower()
+    )
     return list(session.execute(stmt).scalars().all())
 
 
@@ -130,7 +134,11 @@ def insert_note(session: Session, row: NoteRow) -> None:
 
 
 def list_notes_for_target(session: Session, target_id: str) -> list[NoteRow]:
-    stmt = select(NoteRow).where(NoteRow.target_id == target_id).order_by(NoteRow.created_at)
+    stmt = (
+        select(NoteRow)
+        .where(NoteRow.target_id == target_id)
+        .order_by(NoteRow.created_at)
+    )
     return list(session.execute(stmt).scalars().all())
 
 
@@ -168,7 +176,9 @@ def list_well_members(session: Session, well_id: str) -> list[WellMemberRow]:
     return list(session.execute(stmt).scalars().all())
 
 
-def get_well_member(session: Session, well_id: str, target_id: str) -> WellMemberRow | None:
+def get_well_member(
+    session: Session, well_id: str, target_id: str
+) -> WellMemberRow | None:
     return session.execute(
         select(WellMemberRow).where(
             WellMemberRow.well_id == well_id, WellMemberRow.target_id == target_id
