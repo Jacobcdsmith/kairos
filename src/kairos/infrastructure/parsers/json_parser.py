@@ -64,7 +64,7 @@ class JsonParser:
 
         ordinal_counter = [0]
 
-        # Iterative BFS/DFS traversal — avoids Python's recursion limit on
+        # Iterative DFS traversal — avoids Python's recursion limit on
         # deeply nested JSON documents (e.g. 1 000+ levels).  Each stack
         # frame is (value, json_path, parent_span_id); the span_id for the
         # current node is allocated before its children so containment
@@ -116,7 +116,7 @@ class JsonParser:
             if isinstance(value, dict):
                 # Push children in reverse order so left-to-right ordinals come
                 # out naturally when the stack unwinds.
-                for key in reversed(list(value.keys())):
+                for key in reversed(value):
                     stack.append((value[key], f"{json_path}.{key}", span_id))
             elif isinstance(value, list):
                 for i in reversed(range(len(value))):
