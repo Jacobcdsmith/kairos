@@ -112,11 +112,11 @@ needs.
 # kairos/tui/state.py
 @dataclass(frozen=True)
 class Selection:
-    kind: Literal["none", "artifact", "span", "entity", "relation",
-                  "note", "well", "doctor_check"]
+    kind: Literal["none", "artifact", "span", "entity", "relation", "note", "well", "doctor_check"]
     id: str | None
     parent_id: str | None = None
     origin_view: str | None = None
+
 
 @dataclass(frozen=True)
 class ActivityEntry:
@@ -128,11 +128,23 @@ class ActivityEntry:
     summary: str
     result_reference: str | None
 
+
 @dataclass(frozen=True)
 class TuiState:
     workspace_path: Path
-    mode: Literal["home", "artifacts", "search", "show", "trace", "well",
-                  "config", "logs", "doctor", "history", "help"]
+    mode: Literal[
+        "home",
+        "artifacts",
+        "search",
+        "show",
+        "trace",
+        "well",
+        "config",
+        "logs",
+        "doctor",
+        "history",
+        "help",
+    ]
     active_well: str | None
     selection: Selection
     activity: tuple[ActivityEntry, ...]

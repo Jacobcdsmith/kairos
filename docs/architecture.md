@@ -128,6 +128,7 @@ class Parser(Protocol):
     kind: ArtifactKind
     parser_name: str
     parser_version: str
+
     def sniff(self, path: Path) -> bool: ...
     def parse(self, path: Path, artifact_id: str) -> ParseResult: ...
 ```

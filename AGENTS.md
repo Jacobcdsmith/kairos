@@ -25,11 +25,11 @@ The `kairos` package is installed as a project dependency. Connect through the a
 
 ```python
 from kairos.tool import (
-    kairos_status,      # workspace aggregate stats
-    kairos_search,      # FTS5 full-text search → ranked hits
-    kairos_trace,       # bidirectional BFS entity trace
-    kairos_show,        # full artifact detail + spans
-    kairos_ingest,      # ingest files into the workspace
+    kairos_status,  # workspace aggregate stats
+    kairos_search,  # FTS5 full-text search → ranked hits
+    kairos_trace,  # bidirectional BFS entity trace
+    kairos_show,  # full artifact detail + spans
+    kairos_ingest,  # ingest files into the workspace
 )
 ```
 
@@ -123,6 +123,7 @@ A KAIROS workspace is per-project. Each project root with `kairos init` gets its
 
 ```python
 from kairos.tool import kairos_init
+
 kairos_init(path="/other/project")
 ```
 
