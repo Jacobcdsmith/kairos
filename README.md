@@ -139,6 +139,57 @@ Creates a temporary workspace, ingests all parser fixture types (Markdown, JSON,
 
 ---
 
+## A real-world aha moment
+
+> *"Our firmware review process involves a Kconfig tree, a changelog, release notes PDF, and Python tooling — all cross-referencing each other. I needed to answer: what docs and code are affected by `CONFIG_WIFI_POWER_SAVE`?"*
+
+With KAIROS, that's five commands:
+
+```bash
+# 1. Create a workspace inside the firmware repo
+kairos init .
+
+# 2. Ingest everything at once — Kconfig JSON, Markdown docs, PDF release notes, Python tooling
+kairos ingest --recursive .
+
+# 3. Search confirms the symbol is indexed with its exact location
+$ kairos search CONFIG_WIFI_POWER_SAVE
+
+  [1] kconfig:Main/Networking/CONFIG_WIFI_POWER_SAVE
+      firmware/menuconfig.json  (parser: kairos.kconfig v1.0.0 · extracted)
+      "Enable power-save mode for the Wi-Fi driver"
+
+  [2] lines:42-42
+      docs/changelog.md  (parser: kairos.markdown v1.0.0 · extracted)
+      "- Disabled CONFIG_WIFI_POWER_SAVE by default (see PR #881)"
+
+  [3] page:7
+      release_notes.pdf  (parser: kairos.pdf v1.0.0 · extracted)
+      "Power-save mode is off by default in v2.4.1"
+
+# 4. Trace the symbol across ALL documents — two hops, deterministically
+$ kairos trace CONFIG_WIFI_POWER_SAVE --depth 3
+
+  entity  CONFIG_WIFI_POWER_SAVE  (kconfig_symbol)
+  │
+  ├─ mentioned in ──► [span] kconfig:Main/Networking/CONFIG_WIFI_POWER_SAVE
+  │                          firmware/menuconfig.json
+  │
+  ├─ depends_on ◄──── [entity] CONFIG_WIFI  (kconfig_symbol)
+  │                            firmware/menuconfig.json
+  │
+  └─ heading_contains ──► [span] lines:40-50
+                                 docs/changelog.md  ← crossed document boundary
+                                 "## v2.4.1 Changes"
+
+# 5. Add a note so the finding is preserved in the workspace
+kairos note <span-id> "Confirmed: power-save off by default since v2.4.1 (PR #881)"
+```
+
+**What just happened:** KAIROS walked from a Kconfig symbol entity → to its mention in the firmware JSON → through a `heading_contains` relation → into a completely different Markdown file, in three hops, with zero embeddings and zero guessing. Every step shows you the exact artifact, locator, and relation rule that got it there. You can re-run it six months later on a new checkout and get the same answer, or a provably different one.
+
+---
+
 ## How it's built
 
 - **Storage**: SQLite as the canonical store (9 tables), plus an FTS5 virtual table with sync triggers — no separate search service, no vector database.

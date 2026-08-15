@@ -116,3 +116,26 @@ def test_non_dict_child_is_diagnosed_not_dropped(tmp_path: Path) -> None:
     assert any("not-a-node" in d.message for d in result.diagnostics)
     # the well-formed sibling is still parsed, not dropped along with its bad sibling
     assert any(e.canonical_name == "CONFIG_A" for e in result.entities)
+
+
+def test_kconfig_deeply_nested_does_not_raise(tmp_path: Path) -> None:
+    """A Kconfig tree with >1000 levels of nesting must parse without
+    RecursionError — the iterative traversal replaces the former recursive
+    visit() closure that hit Python's default stack limit at ~950 levels."""
+    depth = 1100
+    # Build a chain of menus: {"kairos_kind": ..., "name": "L0",
+    #   "children": [{"name": "L1", "children": [...]}]}
+    node: dict[str, object] = {"name": f"L{depth}", "children": []}
+    for i in range(depth - 1, -1, -1):
+        node = {"name": f"L{i}", "children": [node]}
+    doc: dict[str, object] = {
+        "kairos_kind": "kconfig_menu",
+        **node,
+    }
+    path = tmp_path / "deep_kconfig.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+
+    result = KconfigParser().parse(path, "artifact-deep-kconfig")
+
+    assert result.parse_status == ParseStatus.OK
+    assert len(result.spans) == depth + 1  # root + depth children

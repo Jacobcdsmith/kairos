@@ -85,7 +85,13 @@ class KconfigParser:
         symbol_entity_ids: dict[str, str] = {}
         pending_depends: list[tuple[str, str]] = []  # (subject_entity_id, depends_on_text)
 
-        def visit(node: dict[str, JsonValue], menu_path: str, parent_span_id: str | None) -> None:
+        # Iterative traversal — avoids Python's recursion limit on deeply
+        # nested Kconfig trees (e.g. 1 000+ levels).  Each stack frame is
+        # (node, menu_path, parent_span_id).
+        stack: list[tuple[dict[str, JsonValue], str, str | None]] = [(document, "", None)]
+        while stack:
+            node, menu_path, parent_span_id = stack.pop()
+
             node_type = node.get("node_type", "menu")
             name = str(node.get("name", "?"))
             node_path = f"{menu_path}/{name}" if menu_path else name
@@ -162,9 +168,11 @@ class KconfigParser:
 
             children = node.get("children", [])
             if isinstance(children, list):
-                for child in children:
+                # Push children in reverse order so they are processed
+                # left-to-right (stack pops from the right).
+                for child in reversed(children):
                     if isinstance(child, dict):
-                        visit(child, node_path, span_id)
+                        stack.append((child, node_path, span_id))
                     else:
                         # A non-object entry in a children array — never
                         # silently skipped, per the project's founding
@@ -178,8 +186,6 @@ class KconfigParser:
                                 locator_json=locator_to_json(locator),
                             )
                         )
-
-        visit(document, "", None)
 
         for subject_entity_id, depends_expr in pending_depends:
             tokens = [t.strip() for t in depends_expr.split("&&")]
