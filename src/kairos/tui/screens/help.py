@@ -26,19 +26,28 @@ _HELP_TEXT = """\
    :logs <query>               log search with locators
    :doctor                     workspace health checks
    :ingest [path] [-r]         ingest files (default: workspace root)
-   :history                    this session's command log
+   :history                    this session's command log, persisted across restarts
+   :history --clear            wipe command history (in-session and on disk)
+   :bookmark <name>            save the last command as a named bookmark
+   :bookmark --remove <name>   delete a saved bookmark
+   :bookmarks                  list saved bookmarks
    :help  (or bare ?)          this screen
    :refresh  (or r)            re-run the last successful command
    :quit  (or :q)              quit
 
  KEYBINDINGS
-   Ctrl+P   fuzzy finder            Tab / Shift+Tab   cycle pane focus
-   Ctrl+R   history search          /                 start a search
-   Enter    run / inspect           w                 well selector
-   Up/Down  move selection          c                 copy citation
-   r        re-run last command     y                 copy excerpt
-   t        interactive tutorial    ?                 help
-   Escape   close overlay           q                 quit (not while typing)
+   Ctrl+P   fuzzy finder                Tab / Shift+Tab   cycle pane focus
+   Ctrl+G   go to item # (Explorer)     Ctrl+R            history search
+   /        start a search              w                 well selector
+   Shift+B  bookmark picker             Up/Down           move selection / cycle history
+   Enter    run / inspect               c                 copy citation
+   r        re-run last command         y                 copy excerpt
+   t        interactive tutorial        ?                 help
+   Escape   close overlay               q                 quit (not while typing)
+
+ In the Evidence pane (focused): Up/Down/Page Up/Page Down/Home/End scroll
+ a long citation excerpt. In the command line: Up/Down cycle through
+ command history instead of moving the cursor.
 
  PROVENANCE LAYERS
    RAW        the ingested bytes themselves

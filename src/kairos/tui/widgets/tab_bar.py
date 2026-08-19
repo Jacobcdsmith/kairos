@@ -21,12 +21,17 @@ _MODE_LABELS = {
     "history": "\u25b8 History",
     "help": "? Help",
     "notes": "\u270e Notes",
+    "bookmarks": "\u2605 Bookmarks",
 }
+
+_BOOKMARK_GLYPH = "\u2605"
 
 
 class _TabItem(Static):
-    def __init__(self, label: str, mode: str, active: bool = False) -> None:
-        super().__init__(label, classes="tab-item active" if active else "tab-item")
+    def __init__(
+        self, label: str, mode: str, active: bool = False, classes: str = "tab-item"
+    ) -> None:
+        super().__init__(label, classes=f"{classes} active" if active else classes)
         self.mode = mode
 
 
@@ -41,3 +46,12 @@ class TabBar(Horizontal):
         self.remove_children()
         label = _MODE_LABELS.get(state.mode, state.mode)
         self.mount(_TabItem(label, state.mode, active=True))
+        # Most-recently-saved first, matching the bookmark picker's ordering.
+        for bookmark in reversed(state.recent_bookmarks):
+            self.mount(
+                _TabItem(
+                    f"{_BOOKMARK_GLYPH} {bookmark.name}",
+                    "bookmarks",
+                    classes="tab-item bookmark",
+                )
+            )

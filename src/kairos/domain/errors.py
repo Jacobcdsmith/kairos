@@ -59,6 +59,10 @@ class WellMemberNotFoundError(KairosError):
     """Raised by ``kairos well remove`` when the member is not in the well."""
 
 
+class BookmarkNotFoundError(KairosError):
+    """Raised when a TUI bookmark name does not exist."""
+
+
 class TargetNotFoundError(KairosError):
     """Raised when a note or well-add target id does not resolve to an artifact or span."""
 

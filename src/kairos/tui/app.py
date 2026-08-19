@@ -17,9 +17,12 @@ from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.widgets import Input, ListView
 
+from kairos.schemas.bookmark import BookmarkResult
+from kairos.services.bookmarks import list_bookmarks
 from kairos.services.context import RuntimeContext
 from kairos.tui import controller
 from kairos.tui.commands import load_history
+from kairos.tui.screens.bookmark_picker import BookmarkPickerScreen
 from kairos.tui.screens.fuzzy_finder import FuzzyFinderScreen
 from kairos.tui.screens.goto_line import GotoLineScreen
 from kairos.tui.screens.help import HelpScreen
@@ -30,6 +33,7 @@ from kairos.tui.state import Selection, TuiState
 from kairos.tui.widgets.evidence_pane import EvidencePane, citation_text, excerpt_text
 from kairos.tui.widgets.explorer_pane import ExplorerPane
 from kairos.tui.widgets.status_line import StatusLine
+from kairos.tui.widgets.tab_bar import TabBar
 from kairos.tui.widgets.workspace_pane import WorkspacePane
 
 _STYLES_PATH = Path(__file__).parent / "styles" / "kairos.tcss"
@@ -51,6 +55,7 @@ class KairosApp(App[None]):
         Binding("shift+tab", "cycle_focus(true)", "Cycle pane (reverse)", show=False),
         Binding("slash", "start_search", "Search"),
         Binding("w", "open_well_picker", "Wells"),
+        Binding("B", "open_bookmark_picker", "Bookmarks"),
         Binding("c", "copy_citation", "Copy citation"),
         Binding("y", "copy_excerpt", "Copy excerpt"),
         Binding("r", "refresh_view", "Refresh", show=False),
@@ -65,9 +70,22 @@ class KairosApp(App[None]):
         self._request_id = 0
         persisted_history = tuple(r.command for r in load_history(runtime_ctx.workspace.root))
         self.state = TuiState(
-            workspace_path=runtime_ctx.workspace.root, command_history=persisted_history
+            workspace_path=runtime_ctx.workspace.root,
+            command_history=persisted_history,
+            recent_bookmarks=tuple(self._load_recent_bookmarks(runtime_ctx)),
         )
         self.layout_mode = "wide"
+
+    @staticmethod
+    def _load_recent_bookmarks(runtime_ctx: RuntimeContext) -> list[BookmarkResult]:
+        # Best-effort at cold start: a corrupt .bookmarks.json must not crash
+        # the app before Textual has anything on screen to report it with —
+        # unlike a live `:bookmarks` dispatch, which surfaces the same error
+        # through the normal status-line path once the UI is already up.
+        try:
+            return list_bookmarks(runtime_ctx)[-3:]
+        except Exception:
+            return []
 
     def on_mount(self) -> None:
         self.push_screen(MainScreen())
@@ -137,12 +155,18 @@ class KairosApp(App[None]):
         if reference is None:
             return
         kind, target_id = reference
+        old_state = self.state
         new_state = dataclasses.replace(
             self.state,
             selection=Selection(kind=kind, id=target_id, origin_view=self.state.mode),
         )
         self.state = new_state
-        self.query_one(MainScreen).refresh_from_state(None, new_state)
+        # `old_state`, not `None` — MainScreen.refresh_from_state(None, ...)
+        # unconditionally re-appends the last activity entry to the Workspace
+        # transcript. A selection doesn't add an activity entry, so passing
+        # the real prior state here is what keeps a plain Explorer click from
+        # duplicating the last command's whole result table into the log.
+        self.query_one(MainScreen).refresh_from_state(old_state, new_state)
 
     # -- actions --------------------------------------------------------------
 
@@ -192,6 +216,27 @@ class KairosApp(App[None]):
                 self.run_command(":well clear")
 
         self.push_screen(WellPickerScreen(self.runtime_ctx), handle_result)
+
+    def action_open_bookmark_picker(self) -> None:
+        if isinstance(self.focused, Input):
+            return
+
+        def handle_result(command: str | None) -> None:
+            # The picker may have removed a bookmark even on cancel (via its
+            # own `d` binding), so always resync the tab bar's cached copy —
+            # not just on a run. Refreshing only the tab bar (not the whole
+            # MainScreen) matters here: MainScreen.refresh_from_state(None, ...)
+            # unconditionally re-appends the last activity entry into the
+            # Workspace transcript, which would duplicate it on every picker
+            # close that didn't actually run anything.
+            self.state = dataclasses.replace(
+                self.state, recent_bookmarks=tuple(self._load_recent_bookmarks(self.runtime_ctx))
+            )
+            self.query_one(TabBar).refresh_from_state(self.state)
+            if command is not None:
+                self.run_command(command)
+
+        self.push_screen(BookmarkPickerScreen(self.runtime_ctx), handle_result)
 
     def action_show_help(self) -> None:
         self.push_screen(HelpScreen())

@@ -35,6 +35,8 @@ _KNOWN_COMMANDS = frozenset(
         "note",
         "ingest",
         "tutorial",
+        "bookmark",
+        "bookmarks",
     }
 )
 
@@ -127,6 +129,8 @@ _COMMAND_HINTS: dict[str, str] = {
     "tutorial": "open the guided tutorial overlay",
     "refresh": "re-run the last successful command",
     "quit": "quit the TUI",
+    "bookmark": "save the last command as <name> (--remove <name> to delete)",
+    "bookmarks": "list saved bookmarks (Shift+B to pick and re-run one)",
 }
 
 
