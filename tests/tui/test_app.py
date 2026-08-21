@@ -104,6 +104,29 @@ async def test_selecting_artifact_renders_full_citation(runtime_ctx: RuntimeCont
 
 
 @pytest.mark.asyncio
+async def test_selecting_in_explorer_does_not_duplicate_workspace_transcript(
+    runtime_ctx: RuntimeContext,
+) -> None:
+    app = KairosApp(runtime_ctx)
+    async with app.run_test(size=WIDE) as pilot:
+        await _type_command(pilot, ":artifacts")
+        workspace_pane = app.query_one(WorkspacePane)
+        line_count = len(workspace_pane.lines)
+
+        explorer = app.query_one(ExplorerPane)
+        explorer.focus()
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        await pilot.press("down")
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert len(workspace_pane.lines) == line_count
+
+
+@pytest.mark.asyncio
 async def test_search_shows_hits_with_full_citations(runtime_ctx: RuntimeContext) -> None:
     app = KairosApp(runtime_ctx)
     async with app.run_test(size=WIDE) as pilot:

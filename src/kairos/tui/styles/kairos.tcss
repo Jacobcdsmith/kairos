@@ -196,6 +196,34 @@ WellPickerScreen {
     border-left: thick #f0883e;
 }
 
+/* ── Bookmark picker overlay ───────────────────────────────────────── */
+
+BookmarkPickerScreen {
+    align: center middle;
+}
+
+#bookmark-picker-container {
+    background: #161b22;
+    border: heavy #d2a8ff;
+    width: 70%;
+    height: 70%;
+    padding: 1 2;
+}
+
+#bookmark-picker-list {
+    height: 1fr;
+}
+
+#bookmark-picker-list > ListItem {
+    padding: 0 1;
+    border-bottom: solid #21262d;
+}
+
+#bookmark-picker-list > ListItem.-highlight {
+    background: #1c2128;
+    border-left: thick #d2a8ff;
+}
+
 /* ── Fuzzy finder overlay ──────────────────────────────────────────── */
 
 FuzzyFinderScreen {
@@ -275,6 +303,11 @@ GotoLineScreen {
 
 .tab-item:hover {
     color: #c9d1d9;
+}
+
+.tab-item.bookmark {
+    color: #d2a8ff;
+    text-style: none;
 }
 
 /* ── Tutorial overlay ──────────────────────────────────────────────── */

@@ -11,6 +11,7 @@ from typing import Literal, cast
 
 from kairos.schemas.activity import ActivityEvent
 from kairos.schemas.artifact import ArtifactDetail, ArtifactSummary
+from kairos.schemas.bookmark import BookmarkResult
 from kairos.schemas.config import ConfigSymbolResult
 from kairos.schemas.dashboard import DashboardResult
 from kairos.schemas.doctor import DoctorReport
@@ -50,6 +51,7 @@ Mode = Literal[
     # docs/tli-implementation-plan.md's service-layer-gaps section for the
     # other documented deviations from the pasted spec's literal dataclass.
     "notes",
+    "bookmarks",
 ]
 
 FocusTarget = Literal["explorer", "workspace", "evidence", "command_line"]
@@ -70,6 +72,7 @@ ModeResult = (
     | WellDetail
     | list[NoteResult]
     | list[ActivityEvent]
+    | list[BookmarkResult]
     | None
 )
 
@@ -122,6 +125,10 @@ class TuiState:
     artifact_count: int = 0
     workspace_size_bytes: int = 0
     well_count: int = 0
+    # Up to 3 most-recently-saved bookmarks, oldest first — for the tab bar.
+    # Loaded at startup and refreshed by :bookmark/:bookmarks so it's never
+    # more than one dispatch stale.
+    recent_bookmarks: tuple[BookmarkResult, ...] = ()
 
 
 def as_list_of[T](value: object, item_type: type[T]) -> list[T] | None:

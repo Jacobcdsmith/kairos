@@ -20,9 +20,11 @@ from kairos.infrastructure.database.orm import (
     RelationRow,
     SourceSpanRow,
 )
+from kairos.schemas.bookmark import BookmarkResult
 from kairos.schemas.dashboard import DashboardResult, ParseBreakdown
 from kairos.services.activity import recent_events
 from kairos.services.artifacts import list_artifacts as list_artifacts_service
+from kairos.services.bookmarks import list_bookmarks, remove_bookmark, save_bookmark
 from kairos.services.config_query import get_config_symbol
 from kairos.services.context import RuntimeContext
 from kairos.services.doctor import run_doctor
@@ -55,6 +57,8 @@ _MODE_BY_COMMAND: dict[str, Mode] = {
     "history": "history",
     "help": "help",
     "note": "notes",
+    "bookmark": "bookmarks",
+    "bookmarks": "bookmarks",
 }
 
 
@@ -474,6 +478,63 @@ def _ingest(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> T
     )
 
 
+_RECENT_BOOKMARKS_SHOWN = 3
+
+
+def _recent_bookmarks(bookmarks: list[BookmarkResult]) -> tuple[BookmarkResult, ...]:
+    return tuple(bookmarks[-_RECENT_BOOKMARKS_SHOWN:])
+
+
+def _bookmark(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+    if not command.args:
+        raise KairosError("Usage: :bookmark <name> | :bookmark --remove <name>")
+
+    if command.args[0] == "--remove":
+        if len(command.args) < 2:
+            raise KairosError("Usage: :bookmark --remove <name>")
+        name = command.args[1]
+        remove_bookmark(runtime_ctx, name)
+        bookmarks = list_bookmarks(runtime_ctx)
+        updated_state = dataclasses.replace(state, recent_bookmarks=_recent_bookmarks(bookmarks))
+        return _record(
+            updated_state,
+            mode="bookmarks",
+            command=command.raw,
+            status="success",
+            summary=f"removed bookmark {name!r}",
+            last_result=bookmarks,
+        )
+
+    name = command.args[0]
+    last = next((e for e in reversed(state.activity) if e.status == "success"), None)
+    if last is None:
+        raise KairosError("Nothing to bookmark yet — run a command first.")
+    save_bookmark(runtime_ctx, name, last.command)
+    bookmarks = list_bookmarks(runtime_ctx)
+    updated_state = dataclasses.replace(state, recent_bookmarks=_recent_bookmarks(bookmarks))
+    return _record(
+        updated_state,
+        mode="bookmarks",
+        command=command.raw,
+        status="success",
+        summary=f"bookmarked {last.command!r} as {name!r}",
+        last_result=bookmarks,
+    )
+
+
+def _bookmarks(runtime_ctx: RuntimeContext, state: TuiState, command: Command) -> TuiState:
+    bookmarks = list_bookmarks(runtime_ctx)
+    updated_state = dataclasses.replace(state, recent_bookmarks=_recent_bookmarks(bookmarks))
+    return _record(
+        updated_state,
+        mode="bookmarks",
+        command=command.raw,
+        status="success",
+        summary=f"{len(bookmarks)} bookmark(s)",
+        last_result=bookmarks,
+    )
+
+
 _HANDLERS = {
     "home": _home,
     "artifacts": _artifacts,
@@ -489,4 +550,6 @@ _HANDLERS = {
     "well": _well,
     "note": _note,
     "ingest": _ingest,
+    "bookmark": _bookmark,
+    "bookmarks": _bookmarks,
 }

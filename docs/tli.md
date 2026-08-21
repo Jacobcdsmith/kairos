@@ -87,29 +87,56 @@ Responsive to terminal width:
 :doctor                     workspace health checks (inspect only)
 :note list <target-id>      notes on an artifact or span
 :note add <target-id> <text>  add a note (the only free-text mutation)
-:history                    this session's command log
+:ingest [path] [-r]         ingest files (default: workspace root)
+:history                    this session's command log, persisted across restarts
+:history --clear            wipe command history (in-session and on disk)
+:bookmark <name>            save the last command as a named bookmark
+:bookmark --remove <name>   delete a saved bookmark
+:bookmarks                  list saved bookmarks
+:tutorial                   open the guided tutorial overlay
 :help  (or bare ?)          help overlay
 :refresh  (or key r)        re-run the last successful command
 :quit  (or :q)              quit
 ```
 
 Unknown commands produce an actionable error naming the closest valid
-command — never a traceback.
+command — never a traceback. The command line also offers ghost-text
+completion of command names as you type, and a one-line hint below it
+describing whatever command you're currently typing.
+
+## Command history
+
+Every submitted command line — successful or not — is recorded to
+`.kairos/.tui_history` (append-only JSON Lines) and survives restarts.
+`Up`/`Down` in the command line cycle through it (most recent first);
+`:history --clear` wipes both the in-session and on-disk copies.
+
+## Bookmarks
+
+`:bookmark <name>` saves the *previous* successful command under a name;
+`:bookmarks` lists everything saved; `Shift+B` opens a picker (`Enter` runs
+the highlighted bookmark's command, `d` removes it, `Escape` closes).
+Bookmarks are stored at `.kairos/.bookmarks.json`; the tab bar always shows
+the three most recently saved.
 
 ## Keybindings
 
 | Key | Action |
 |---|---|
-| `Ctrl+P` | Focus the command line |
+| `Ctrl+P` | Fuzzy finder across all ingested artifacts |
+| `Ctrl+G` | "Go to item #" in the Explorer pane |
 | `Ctrl+R` | Open the history overlay |
 | `Tab` / `Shift+Tab` | Cycle focus: Explorer → Workspace → Evidence → command line |
 | `Enter` | Run a command, or inspect the highlighted Explorer item |
-| `Up` / `Down` | Move the Explorer selection |
+| `Up` / `Down` | Move the Explorer selection; cycle command history in the command line; scroll the Evidence pane when it has focus |
+| `Page Up` / `Page Down`, `Home`, `End` | Scroll the Evidence pane when it has focus |
 | `/` | Start a `:search ` in the command line |
 | `w` | Open the coherence-well picker |
+| `Shift+B` | Open the bookmark picker |
 | `c` | Copy the current citation (plain text, terminal clipboard escape — no shell command) |
 | `y` | Copy the current source excerpt (same mechanism as `c`) |
 | `r` | Re-run the last successful command (not while typing) |
+| `t` | Open the guided tutorial |
 | `?` | Help overlay |
 | `q` | Quit (not while the command line has focus) |
 | `Escape` | Close an overlay |
